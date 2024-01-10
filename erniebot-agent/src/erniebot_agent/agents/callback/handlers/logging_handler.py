@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from erniebot_agent.agents.base import BaseAgent
 from erniebot_agent.agents.callback.handlers.base import CallbackHandler
 from erniebot_agent.agents.schema import AgentResponse, LLMResponse, ToolResponse
 from erniebot_agent.chat_models.base import ChatModel
+from erniebot_agent.file import File
 from erniebot_agent.memory.messages import Message
 from erniebot_agent.tools.base import BaseTool
 from erniebot_agent.utils.json import to_pretty_json
@@ -48,7 +49,7 @@ class LoggingHandler(CallbackHandler):
         else:
             self.logger = logger
 
-    async def on_run_start(self, agent: BaseAgent, prompt: str) -> None:
+    async def on_run_start(self, agent: BaseAgent, prompt: str, files: Optional[Sequence[File]]) -> None:
         """Called to log when the agent starts running."""
         self._agent_info(
             "%s is about to start running with input:\n%s",

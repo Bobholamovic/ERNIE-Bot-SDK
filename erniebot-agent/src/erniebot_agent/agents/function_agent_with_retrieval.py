@@ -8,7 +8,6 @@ from erniebot_agent.agents.function_agent import FunctionAgent
 from erniebot_agent.agents.schema import (
     AgentResponse,
     AgentStep,
-    File,
     NoActionStep,
     PluginStep,
     ToolAction,
@@ -16,6 +15,7 @@ from erniebot_agent.agents.schema import (
     ToolResponse,
     ToolStep,
 )
+from erniebot_agent.file import File
 from erniebot_agent.memory.messages import (
     AIMessage,
     FunctionMessage,
@@ -263,7 +263,7 @@ class FunctionAgentWithRetrievalTool(FunctionAgent):
             _logger.info(
                 f"Irrelevant retrieval results. Fallbacking to FunctionAgent for the query: {prompt}"
             )
-            return await super()._run(prompt)
+            return await super()._run(prompt, files)
 
     async def _maybe_retrieval(
         self,
@@ -377,7 +377,7 @@ class FunctionAgentWithRetrievalScoreTool(FunctionAgent):
             _logger.info(
                 f"Irrelevant retrieval results. Fallbacking to FunctionAgent for the query: {prompt}"
             )
-            return await super()._run(prompt)
+            return await super()._run(prompt, files)
 
     async def _maybe_retrieval(
         self,

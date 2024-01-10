@@ -14,17 +14,15 @@
 
 import datetime
 import re
-from typing import Final, Generator, List, Literal, get_args
+from enum import Enum
+from typing import Final, Generator, List
 
-from typing_extensions import TypeAlias
-
-_LOCAL_FILE_ID_PREFIX: Final[str] = "file-local-"
+_FILE_ID_PREFIX: Final[str] = "file-"
+_LOCAL_FILE_ID_PREFIX: Final[str] = _FILE_ID_PREFIX + "local-"
 _UUID_PATTERN: Final[str] = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _LOCAL_FILE_ID_PATTERN: Final[str] = _LOCAL_FILE_ID_PREFIX + _UUID_PATTERN
-_REMOTE_FILE_ID_PREFIX: Final[str] = "file-"
+_REMOTE_FILE_ID_PREFIX: Final[str] = _FILE_ID_PREFIX
 _REMOTE_FILE_ID_PATTERN: Final[str] = _REMOTE_FILE_ID_PREFIX + r"[0-9]{15}"
-
-FilePurpose: TypeAlias = Literal["assistants", "assistants_output"]
 
 _compiled_local_file_id_pattern = re.compile(_LOCAL_FILE_ID_PATTERN)
 _compiled_remote_file_id_pattern = re.compile(_REMOTE_FILE_ID_PATTERN)
@@ -69,10 +67,6 @@ def extract_remote_file_ids(str_: str) -> List[str]:
     return _compiled_remote_file_id_pattern.findall(str_)
 
 
-def is_valid_file_purpose(file_purpose: str) -> bool:
-    return file_purpose in get_args(FilePurpose)
-
-
 def generate_fake_remote_file_ids() -> Generator[str, None, None]:
     counter = 0
     while True:
@@ -80,3 +74,16 @@ def generate_fake_remote_file_ids() -> Generator[str, None, None]:
         if len(number) > 15:
             break
         yield _REMOTE_FILE_ID_PREFIX + number
+
+
+def get_file_repr(file_id: str) -> str:
+    return f"<file>{file_id}</file>"
+
+
+def get_file_repr_with_url(file_id: str, url: str) -> str:
+    return f"{get_file_repr(file_id)}<url>{url}</url>"
+
+
+class FilePurpose(Enum):
+    ASSISTANTS = "assistants"
+    ASSISTANTS_OUTPUT = "assistants_output"

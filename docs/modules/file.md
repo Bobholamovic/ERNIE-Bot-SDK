@@ -82,7 +82,6 @@
 | create_file_from_bytes       | 从字节创建文件                       |
 | retrieve_remote_file_by_id   | 通过ID获取远程文件                   |
 | look_up_file_by_id           | 通过ID查找本地文件                   |
-| list_remote_files            | 列出远程文件                         |
 
 !!! notes 注意
 

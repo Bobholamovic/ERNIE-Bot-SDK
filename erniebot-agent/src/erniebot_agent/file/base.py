@@ -18,6 +18,8 @@ from typing import Any, Dict, Union
 
 import anyio
 
+from erniebot_agent.file import protocol
+
 
 class BaseFile(metaclass=abc.ABCMeta):
     """
@@ -34,7 +36,6 @@ class BaseFile(metaclass=abc.ABCMeta):
     Methods:
         read_contents: Abstract method to asynchronously read the file contents.
         write_contents_to: Asynchronously write the file contents to a local path.
-        get_file_repr: Return a string representation for use in specific contexts.
         to_dict: Convert the File object to a dictionary.
     """
 
@@ -45,7 +46,7 @@ class BaseFile(metaclass=abc.ABCMeta):
         filename: str,
         byte_size: int,
         created_at: str,
-        purpose: str,
+        purpose: protocol.FilePurpose,
         metadata: Dict[str, Any],
     ) -> None:
         """
@@ -69,20 +70,25 @@ class BaseFile(metaclass=abc.ABCMeta):
         self.created_at = created_at
         self.purpose = purpose
         self.metadata = metadata
-        self._param_names = ["id", "filename", "byte_size", "created_at", "purpose", "metadata"]
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, BaseFile):
-            return self.id == other.id
-        else:
-            return NotImplemented
+        self._param_names = ("id", "filename", "byte_size", "created_at", "purpose", "metadata")
 
     def __repr__(self) -> str:
         attrs_str = self._get_attrs_str()
         return f"<{self.__class__.__name__} {attrs_str}>"
 
+    def __str__(self) -> str:
+        return self.get_repr()
+
     @abc.abstractmethod
     async def read_contents(self) -> bytes:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def delete(self) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_repr_with_url(self) -> str:
         raise NotImplementedError
 
     async def write_contents_to(self, local_path: Union[str, os.PathLike]) -> None:
@@ -90,8 +96,8 @@ class BaseFile(metaclass=abc.ABCMeta):
         contents = await self.read_contents()
         await anyio.Path(local_path).write_bytes(contents)
 
-    def get_file_repr(self) -> str:
-        return f"<file>{self.id}</file>"
+    def get_repr(self) -> str:
+        return protocol.get_file_repr(self.id)
 
     def to_dict(self) -> dict:
         return {k: getattr(self, k) for k in self._param_names}

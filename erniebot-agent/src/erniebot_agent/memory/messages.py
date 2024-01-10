@@ -11,13 +11,9 @@
 # limitations under the License
 
 import logging
-from typing import Dict, List, Optional, Sequence, TypedDict
+from typing import Dict, List, Optional, TypedDict
 
 import erniebot.utils.token_helper as token_helper
-from typing_extensions import Self
-
-from erniebot_agent.file import File, protocol
-from erniebot_agent.file.remote_file import RemoteFile
 
 _logger = logging.getLogger(__name__)
 
@@ -37,7 +33,7 @@ class TokenUsage(TypedDict):
     completion_tokens: int
 
 
-class PluginInfo(Dict):
+class PluginInfo(TypedDict):
     names: List[str]
 
 
@@ -161,69 +157,11 @@ class HumanMessage(Message):
         >>> from erniebot_agent.messages import HumanMessage
         >>> HumanMessage("I want to order a pizza.")
         <role: user, content: I want to order a pizza.>
-        >>> prompt = "What is the text in this image?"
-        >>> files = [await file_manager.create_file_from_path(file_path="ocr_img.jpg", file_type="remote")]
-        >>> message = await HumanMessage.create_with_files(
-                prompt, files, include_file_urls=True)
-        >>> message
-        <role: user, content: W h ha t.<file>File-local-xxxx</file><url>{url}</url>.>
 
     """
 
     def __init__(self, content: str):
         super().__init__(role="user", content=content)
-
-    @classmethod
-    async def create_with_files(
-        cls, text: str, files: Sequence[File], *, include_file_urls: bool = False
-    ) -> Self:
-        """
-        create a Human Message with file input
-
-        Args:
-            text: content of the message.
-            files (Sequence[File]): The files that the message contains.
-            include_file_urls: Whehter to include file URLs in the content of message.
-
-        Returns:
-            A HumanMessage object that contains file in the content.
-
-        Raises:
-            RuntimeError: Only `RemoteFile` objects can set include_file_urls as True.
-        """
-
-        def _get_file_reprs(files: Sequence[File]) -> List[str]:
-            file_reprs: List[str] = []
-            for file in files:
-                file_reprs.append(file.get_file_repr())
-            return file_reprs
-
-        async def _create_file_reprs_with_urls(files: Sequence[File]) -> List[str]:
-            file_reprs = []
-            for file in files:
-                if not isinstance(file, RemoteFile):
-                    raise TypeError("Only `RemoteFile` objects can have URLs in their representations.")
-                url = await file.create_temporary_url()
-                file_reprs.append(file.get_file_repr_with_url(url))
-
-            return file_reprs
-
-        def _append_files_repr_to_text(text: str, files_repr: str) -> str:
-            return f"{text}\n{files_repr}"
-
-        if len(files) > 0:
-            if len(protocol.extract_file_ids(text)) > 0:
-                _logger.warning("File IDs were found in the text. The provided files will be ignored.")
-            else:
-                if include_file_urls:
-                    file_reprs = await _create_file_reprs_with_urls(files)
-                else:
-                    file_reprs = _get_file_reprs(files)
-                files_repr = "\n".join(file_reprs)
-                content = _append_files_repr_to_text(text, files_repr)
-        else:
-            content = text
-        return cls(content)
 
 
 class AIMessage(Message):

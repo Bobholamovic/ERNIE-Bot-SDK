@@ -17,7 +17,7 @@ class CountingCallbackHandler(CallbackHandler):
         self.run_errors = 0
         self.run_ends = 0
 
-    async def on_run_start(self, agent, prompt):
+    async def on_run_start(self, agent, prompt, files):
         self.run_starts += 1
 
     async def on_llm_start(self, agent, llm, messages):

@@ -14,7 +14,7 @@
 
 import functools
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, TypeVar, Union
+from typing import Any, Dict, Generic, List, TypedDict, TypeVar, Union
 
 from typing_extensions import Literal
 
@@ -37,11 +37,6 @@ class PluginAction(object):  # save for plugins that can be planned
 
     plugin_name: str
     finish_reason: str
-
-
-class ToolInfo(Dict):
-    tool_name: str
-    tool_args: str
 
 
 @dataclass
@@ -80,7 +75,7 @@ class ToolResponse(object):
     output_files: List[File]
 
 
-_IT = TypeVar("_IT", bound=Dict)
+_IT = TypeVar("_IT")
 _RT = TypeVar("_RT")
 
 
@@ -104,6 +99,19 @@ class AgentStepWithFiles(AgentStep[_IT, _RT]):
         return [*self.input_files, *self.output_files]
 
 
+class ToolInfo(TypedDict):
+    tool_name: str
+    tool_args: str
+
+
+class _NullInfo(TypedDict):
+    pass
+
+
+class _NullResult(object):
+    pass
+
+
 @dataclass
 class ToolStep(AgentStepWithFiles[ToolInfo, Any]):
     """A step taken by an agent that calls a tool."""
@@ -112,14 +120,6 @@ class ToolStep(AgentStepWithFiles[ToolInfo, Any]):
 @dataclass
 class PluginStep(AgentStepWithFiles[PluginInfo, str]):
     """A step taken by an agent that calls a plugin."""
-
-
-class _NullInfo(Dict):
-    pass
-
-
-class _NullResult(object):
-    pass
 
 
 @dataclass

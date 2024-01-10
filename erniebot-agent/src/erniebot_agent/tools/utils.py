@@ -9,8 +9,7 @@ from openapi_spec_validator import validate
 from openapi_spec_validator.readers import read_from_filename
 from requests import Response
 
-from erniebot_agent.file import File, FileManager
-from erniebot_agent.file.protocol import is_local_file_id, is_remote_file_id
+from erniebot_agent.file import File, FileManager, protocol
 from erniebot_agent.tools.schema import (
     ToolParameterView,
     get_args,
@@ -24,7 +23,7 @@ _logger = logging.getLogger(__name__)
 
 def tool_response_contains_file(element: Any):
     if isinstance(element, str):
-        if is_local_file_id(element) or is_remote_file_id(element):
+        if protocol.is_file_id(element):
             return True
     elif isinstance(element, dict):
         for val in element.values():
@@ -173,7 +172,7 @@ async def parse_file_from_json_response(
                 file = await file_manager.create_file_from_bytes(
                     content,
                     filename=f"test{suffix}",
-                    file_purpose="assistants_output",
+                    file_purpose=protocol.FilePurpose.ASSISTANTS_OUTPUT,
                     file_metadata={"tool_name": tool_name},
                 )
                 file_infos[key] = file.id
@@ -191,7 +190,10 @@ async def parse_file_from_response(
     if content_disposition is not None:
         file_name = response.headers["Content-Disposition"].split("filename=")[1]
         local_file = await file_manager.create_file_from_bytes(
-            response.content, file_name, file_purpose="assistants_output", file_metadata=file_metadata
+            response.content,
+            file_name,
+            file_purpose=protocol.FilePurpose.ASSISTANTS_OUTPUT,
+            file_metadata=file_metadata,
         )
         return local_file
 
@@ -216,7 +218,7 @@ async def parse_file_from_response(
             return await file_manager.create_file_from_bytes(
                 content,
                 f"tool-{file_suffix}",
-                file_purpose="assistants_output",
+                file_purpose=protocol.FilePurpose.ASSISTANTS_OUTPUT,
                 file_metadata=file_metadata,
             )
 
@@ -227,7 +229,7 @@ async def parse_file_from_response(
         return await file_manager.create_file_from_bytes(
             response.content,
             f"tool-{file_suffix}",
-            file_purpose="assistants_output",
+            file_purpose=protocol.FilePurpose.ASSISTANTS_OUTPUT,
             file_metadata=file_metadata,
         )
 

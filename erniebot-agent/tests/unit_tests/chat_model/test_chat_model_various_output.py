@@ -5,7 +5,7 @@ from erniebot_agent.chat_models.erniebot import convert_response_to_output
 from erniebot_agent.memory import HumanMessage
 from erniebot_agent.memory.messages import AIMessage
 from tests.unit_tests.testing_utils.mocks.mock_chat_models import (
-    FakeERNIEBotWithPresetResponses,
+    FakeChatModelWithPresetResponses,
 )
 
 
@@ -37,7 +37,7 @@ def fake_erniebot_with_search_info():
         "Transfer-Encoding": "chunked",
     }
     fake_response_with_search_info = ChatCompletionResponse(rcode, rbody, rheaders)
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_response_with_search_info, AIMessage)]
     )
 
@@ -163,7 +163,7 @@ def fake_erniebot_with_plugin_info():  # withfile plugins
     }
     fake_response_with_plugin_info = ChatCompletionResponse(rcode, rbody, rheaders)
 
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_response_with_plugin_info, AIMessage)]
     )
 
@@ -199,7 +199,7 @@ def fake_erniebot_with_function_call():
         "Transfer-Encoding": "chunked",
     }
     fake_function_call_response = ChatCompletionResponse(rcode, rbody, rheaders)
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_function_call_response, AIMessage)]
     )
 
@@ -230,7 +230,7 @@ def fake_erniebot_with_vanilla_output():
         "Transfer-Encoding": "chunked",
     }
     fake_vanilla_message_response = ChatCompletionResponse(rcode, rbody, rheaders)
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_vanilla_message_response, AIMessage)]
     )
 

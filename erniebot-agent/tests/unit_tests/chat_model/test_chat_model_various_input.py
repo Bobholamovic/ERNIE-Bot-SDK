@@ -3,13 +3,13 @@ import pytest
 from erniebot_agent.memory import HumanMessage
 from erniebot_agent.memory.messages import SystemMessage
 from tests.unit_tests.testing_utils.mocks.mock_chat_models import (
-    FakeERNIEBotWithAllInput,
+    FakeChatModelWithAllInput,
 )
 
 
 @pytest.fixture
 def fake_erniebot_with_aistudio_backend_with_atoken():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+    fake_erniebot = FakeChatModelWithAllInput(
         model="ernie-bot-3.5",
         api_type="aistudio",
         access_token="access_token",
@@ -20,7 +20,7 @@ def fake_erniebot_with_aistudio_backend_with_atoken():
 
 @pytest.fixture
 def fake_erniebot_with_aistudio_backend_wo_atoken():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+    fake_erniebot = FakeChatModelWithAllInput(
         model="ernie-bot-3.5", api_type="aistudio", access_token=None, enable_multi_step_tool_call=False
     )
     return fake_erniebot
@@ -28,7 +28,7 @@ def fake_erniebot_with_aistudio_backend_wo_atoken():
 
 @pytest.fixture
 def fake_erniebot_with_qianfan_backend_aksk():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+    fake_erniebot = FakeChatModelWithAllInput(
         model="ernie-bot-3.5",
         api_type="qianfan",
         access_token="access_token",
@@ -41,7 +41,7 @@ def fake_erniebot_with_qianfan_backend_aksk():
 
 @pytest.fixture
 def fake_erniebot_with_qianfan_no_access_token_backend_aksk():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+    fake_erniebot = FakeChatModelWithAllInput(
         model="ernie-bot-3.5",
         api_type="qianfan",
         access_token=None,
@@ -54,7 +54,7 @@ def fake_erniebot_with_qianfan_no_access_token_backend_aksk():
 
 @pytest.fixture
 def fake_erniebot_with_qianfan_no_access_token_backend():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+    fake_erniebot = FakeChatModelWithAllInput(
         model="ernie-bot-3.5",
         api_type="qianfan",
         access_token="access_token",

@@ -10,7 +10,7 @@ from erniebot_agent.retrieval import BaizhongSearch
 from tests.unit_tests.agents.common_util import EXAMPLE_RESPONSE
 from tests.unit_tests.testing_utils.components import CountingCallbackHandler
 from tests.unit_tests.testing_utils.mocks.mock_chat_models import (
-    FakeERNIEBotWithPresetResponses,
+    FakeChatModelWithPresetResponses,
     FakeSimpleChatModel,
 )
 from tests.unit_tests.testing_utils.mocks.mock_memory import FakeMemory
@@ -86,7 +86,7 @@ async def test_functional_agent_with_retrieval_tool_tool_callbacks(identity_tool
 
     # Add new callback
     callback_handler = CountingCallbackHandler()
-    llm = FakeERNIEBotWithPresetResponses(
+    llm = FakeChatModelWithPresetResponses(
         responses=[
             AIMessage('{"is_relevant":true}', function_call=None),
             AIMessage("Text response", function_call=None),
@@ -126,7 +126,7 @@ async def test_functional_agent_with_retrieval_tool_run_retrieval_tool(identity_
         access_token=access_token,
         knowledge_base_id=knowledge_base_id if knowledge_base_id != "" else None,
     )
-    llm = FakeERNIEBotWithPresetResponses(
+    llm = FakeChatModelWithPresetResponses(
         responses=[
             AIMessage('{"is_relevant":true}', function_call=None),
             AIMessage("Text response", function_call=None),
@@ -161,7 +161,7 @@ async def test_functional_agent_with_retrieval_tool_run_retrieval_tool(identity_
     # AIMessage
     assert response.chat_history[3].content == "Text response"
 
-    llm = FakeERNIEBotWithPresetResponses(
+    llm = FakeChatModelWithPresetResponses(
         responses=[
             AIMessage('{"is_relevant":false}', function_call=None),
             AIMessage("Text response", function_call=None),

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, AsyncIterator, List, Literal, Union, overload
+from typing import Any, AsyncIterator, List, Literal, Optional, Union, overload
 
 from erniebot_agent.memory.messages import AIMessage, AIMessageChunk, Message
 
@@ -33,35 +33,78 @@ class ChatModel(metaclass=ABCMeta):
 
     @overload
     async def chat(
-        self, messages: List[Message], *, stream: Literal[False] = ..., **kwargs: Any
+        self,
+        messages: List[Message],
+        *,
+        stream: Literal[False] = ...,
+        functions: Optional[List[dict]] = ...,
+        system: Optional[str] = ...,
+        plugins: Optional[List[str]] = ...,
+        tool_choice: Optional[dict] = ...,
+        **kwargs: Any,
     ) -> AIMessage:
         ...
 
     @overload
     async def chat(
-        self, messages: List[Message], *, stream: Literal[True], **kwargs: Any
+        self,
+        messages: List[Message],
+        *,
+        stream: Literal[True],
+        functions: Optional[List[dict]] = ...,
+        system: Optional[str] = ...,
+        plugins: Optional[List[str]] = ...,
+        tool_choice: Optional[dict] = ...,
+        **kwargs: Any,
     ) -> AsyncIterator[AIMessageChunk]:
         ...
 
     @overload
     async def chat(
-        self, messages: List[Message], *, stream: bool, **kwargs: Any
+        self,
+        messages: List[Message],
+        *,
+        stream: bool,
+        functions: Optional[List[dict]] = ...,
+        system: Optional[str] = ...,
+        plugins: Optional[List[str]] = ...,
+        tool_choice: Optional[dict] = ...,
+        **kwargs: Any,
     ) -> Union[AIMessage, AsyncIterator[AIMessageChunk]]:
         ...
 
     @abstractmethod
     async def chat(
-        self, messages: List[Message], *, stream: bool = False, **kwargs: Any
+        self,
+        messages: List[Message],
+        *,
+        stream: bool = False,
+        functions: Optional[List[dict]] = None,
+        system: Optional[str] = None,
+        plugins: Optional[List[str]] = None,
+        tool_choice: Optional[dict] = None,
+        **kwargs: Any,
     ) -> Union[AIMessage, AsyncIterator[AIMessageChunk]]:
         """The abstract method for asynchronously chatting with the LLM.
 
         Args:
             messages (List[Message]): A list of messages.
-            stream (bool): Whether to use streaming generation. Defaults to False.
-            **kwargs: Keyword arguments, such as `top_p`, `temperature`, `penalty_score`, and `system`.
+            stream (bool): Whether to use streaming generation. Defaults to
+                False.
+            functions (Optional[List[dict]]): The function descriptions to be
+                used by the model. Defaults to None.
+            system (Optional[str]): The system message to be used by the model.
+                Defaults to None.
+            plugins (Optional[List[str]]): The names of the plugins to be used
+                by the model. Defaults to None.
+            tool_choice (Optional[dict]): The information about the tool to be
+                chosen by the model. Defaults to None.
+            **kwargs: Keyword arguments, such as `top_p`, `temperature`, and
+                `penalty_score`.
 
         Returns:
-            If stream is False, returns a single message.
-            If stream is True, returns an asynchronous iterator of message chunks.
+            If `stream` is False, returns a single message.
+            If `stream` is True, returns an asynchronous iterator of message
+            chunks.
         """
         raise NotImplementedError

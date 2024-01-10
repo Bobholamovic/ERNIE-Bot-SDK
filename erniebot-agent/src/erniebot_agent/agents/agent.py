@@ -7,6 +7,7 @@ from typing import (
     Final,
     Iterable,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -20,7 +21,7 @@ from erniebot_agent.agents.callback.default import get_default_callbacks
 from erniebot_agent.agents.callback.handlers.base import CallbackHandler
 from erniebot_agent.agents.mixins import GradioMixin
 from erniebot_agent.agents.schema import AgentResponse, LLMResponse, ToolResponse
-from erniebot_agent.chat_models.erniebot import BaseERNIEBot
+from erniebot_agent.chat_models.base import ChatModel
 from erniebot_agent.file import (
     File,
     FileManager,
@@ -38,7 +39,7 @@ _PLUGINS_WO_FILE_IO: Final[Tuple[str]] = ("eChart",)
 _logger = logging.getLogger(__name__)
 
 
-class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
+class Agent(GradioMixin, BaseAgent):
     """The base class for agents.
 
     Typically, this class should be the base class for custom agent classes. A
@@ -50,12 +51,12 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
         memory: The message storage that keeps the chat history.
     """
 
-    llm: BaseERNIEBot
+    llm: ChatModel
     memory: Memory
 
     def __init__(
         self,
-        llm: BaseERNIEBot,
+        llm: ChatModel,
         tools: Union[ToolManager, Iterable[BaseTool]],
         *,
         memory: Optional[Memory] = None,
@@ -143,23 +144,33 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
     async def run_llm(
         self,
         messages: List[Message],
-        **llm_opts: Any,
+        *,
+        functions: Optional[List[dict]] = None,
+        tool_choice: Optional[str] = None,
+        llm_opts: Optional[Mapping[str, Any]] = None,
     ) -> LLMResponse:
         """Run the LLM asynchronously.
 
         Args:
             messages: The input messages.
-            llm_opts: Options to pass to the LLM.
+            functions: The function descriptions to be used by the LLM.
+            tool_choice: The name of the tool to be chosen by the LLM.
+            llm_opts: The additional options to pass to the LLM.
 
         Returns:
-            Response from the LLM.
+            The LLM's response.
         """
         await self._callback_manager.on_llm_start(agent=self, llm=self.llm, messages=messages)
         try:
-            llm_resp = await self._run_llm(messages, **(llm_opts or {}))
-        except (Exception, KeyboardInterrupt) as e:
+            llm_resp = await self._run_llm(
+                messages,
+                functions=functions,
+                tool_choice=tool_choice,
+                llm_opts=llm_opts,
+            )
+        except BaseException as e:
             await self._callback_manager.on_llm_error(agent=self, llm=self.llm, error=e)
-            raise e
+            raise
         else:
             await self._callback_manager.on_llm_end(agent=self, llm=self.llm, response=llm_resp)
         return llm_resp
@@ -243,24 +254,30 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
     async def _run(self, prompt: str, files: Optional[Sequence[File]] = None) -> AgentResponse:
         raise NotImplementedError
 
-    async def _run_llm(self, messages: List[Message], **opts: Any) -> LLMResponse:
-        for reserved_opt in ("stream", "system", "plugins"):
-            if reserved_opt in opts:
-                raise TypeError(f"`{reserved_opt}` should not be set.")
-
-        if "functions" not in opts:
+    async def _run_llm(
+        self,
+        messages: List[Message],
+        *,
+        functions: Optional[List[dict]] = None,
+        tool_choice: Optional[str] = None,
+        llm_opts: Optional[Mapping[str, Any]] = None,
+    ) -> LLMResponse:
+        if functions is None:
             functions = self._tool_manager.get_tool_schemas()
-        else:
-            functions = opts.pop("functions")
-
-        if hasattr(self.llm, "system"):
-            _logger.warning(
-                "The `system` message has already been set in the agent;"
-                "the `system` message configured in ERNIEBot will become ineffective."
-            )
-        opts["system"] = self.system.content if self.system is not None else None
-        opts["plugins"] = self._plugins
-        llm_ret = await self.llm.chat(messages, stream=False, functions=functions, **opts)
+        tool_choice_for_llm: Optional[dict] = None
+        if tool_choice is not None:
+            tool_choice_for_llm = {"type": "function", "function": {"name": tool_choice}}
+        system = self.system.content if self.system is not None else None
+        plugins = self._plugins
+        llm_ret = await self.llm.chat(
+            messages,
+            stream=False,
+            functions=functions,
+            system=system,
+            plugins=plugins,
+            tool_choice=tool_choice_for_llm,
+            **(llm_opts or {}),
+        )
         return LLMResponse(message=llm_ret)
 
     async def _run_tool(self, tool: BaseTool, tool_args: str) -> ToolResponse:

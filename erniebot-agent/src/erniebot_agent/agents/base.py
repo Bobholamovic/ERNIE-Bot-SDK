@@ -12,16 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import (
-    Any,
-    List,
-    Mapping,
-    Optional,
-    Protocol,
-    Sequence,
-    TypeVar,
-    runtime_checkable,
-)
+from typing import Any, List, Mapping, Optional, Protocol, Sequence, runtime_checkable
 
 from erniebot_agent.agents.schema import AgentResponse, LLMResponse, ToolResponse
 from erniebot_agent.chat_models.base import ChatModel
@@ -30,11 +21,9 @@ from erniebot_agent.memory import Memory
 from erniebot_agent.memory.messages import Message
 from erniebot_agent.tools.base import BaseTool
 
-LLMT = TypeVar("LLMT", bound=ChatModel)
 
-
-class BaseAgent(Protocol[LLMT]):
-    llm: LLMT
+class BaseAgent(Protocol):
+    llm: ChatModel
     memory: Memory
 
     async def run(self, prompt: str, files: Optional[Sequence[File]] = None) -> AgentResponse:

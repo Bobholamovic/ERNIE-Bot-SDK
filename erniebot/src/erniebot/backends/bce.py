@@ -113,7 +113,7 @@ class _BCELegacyBackend(EBBackend):
         )
 
         loop = asyncio.get_running_loop()
-        # XXX: The default executor is used.
+        # XXX: The default executor is used, which may not be `ThreadPoolExecutor`.
         access_token = await loop.run_in_executor(None, self._auth_manager.get_auth_token)
         url_with_token = add_query_params(url, [("access_token", access_token)])
         try:
@@ -130,7 +130,7 @@ class _BCELegacyBackend(EBBackend):
                 "The access token provided is invalid or has expired."
                 " An automatic update will be performed before retrying."
             )
-            # XXX: The default executor is used.
+            # XXX: The default executor is used, which may not be `ThreadPoolExecutor`.
             access_token = await loop.run_in_executor(None, self._auth_manager.update_auth_token)
             url_with_token = add_query_params(url, [("access_token", access_token)])
             return await self._client.asend_request(

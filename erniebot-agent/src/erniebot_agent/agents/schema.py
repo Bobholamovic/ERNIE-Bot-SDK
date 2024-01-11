@@ -14,7 +14,7 @@
 
 import functools
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, TypedDict, TypeVar, Union
+from typing import Any, ClassVar, Dict, Generic, List, TypedDict, TypeVar, Union
 
 from typing_extensions import Literal, NotRequired
 
@@ -29,7 +29,8 @@ class ToolAction(object):
 
     tool_name: str
     tool_args: str
-    type: Literal["tool"] = "tool"
+
+    type: ClassVar[Literal["tool"]] = "tool"
 
 
 @dataclass
@@ -38,7 +39,8 @@ class PluginAction(object):  # save for plugins that can be planned
 
     plugin_name: str
     finish_reason: str
-    type: Literal["plugin"] = "plugin"
+
+    type: ClassVar[Literal["plugin"]] = "plugin"
 
 
 # Note: save for plugins that can be planned

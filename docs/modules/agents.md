@@ -274,7 +274,7 @@ class CustomAgent(Agent):
                 text=self.memory.get_messages()[-1].content,
                 chat_history=chat_history,
                 steps=steps_taken,
-                status="FINISHED",
+                end_reason="FINISHED",
             )
 
         # 其它处理逻辑

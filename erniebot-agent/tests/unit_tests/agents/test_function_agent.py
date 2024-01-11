@@ -219,7 +219,7 @@ async def test_function_agent_max_steps(identity_tool):
 
     response = await agent.run("Run!")
 
-    assert response.status == "STOPPED"
+    assert response.end_reason == "STOPPED"
 
 
 @pytest.mark.asyncio

@@ -95,11 +95,11 @@ class AgentStepWithFiles(AgentStep[_IT, _RT]):
         return [*self.input_files, *self.output_files]
 
 
-AgentEndReason = Union[Literal["FINISHED"], Literal["STOPPED"], Literal["CLARIFY"]]
+AgentRunEndReason = Union[Literal["FINISHED"], Literal["STOPPED"], Literal["CLARIFY"]]
 
 
 class EndInfo(TypedDict):
-    end_reason: AgentEndReason
+    end_reason: AgentRunEndReason
     extra_info: NotRequired[str]  # JSON format
 
 
@@ -133,7 +133,7 @@ class AgentResponse(object):
     text: str
     chat_history: List[Message]
     steps: List[AgentStep]
-    end_reason: AgentEndReason
+    end_reason: AgentRunEndReason
 
     @functools.cached_property  # lazy and prevent extra fime from multiple calls
     def annotations(self) -> Dict[str, List]:

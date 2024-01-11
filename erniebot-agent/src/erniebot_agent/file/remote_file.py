@@ -84,7 +84,7 @@ class RemoteFile(BaseFile):
         return self._client
 
     async def read_contents(self) -> bytes:
-        return await self._read_contents_from_remote()
+        return await self._client.retrieve_file_contents(self.id)
 
     async def delete(self) -> None:
         await self._client.delete_file(self.id)
@@ -96,9 +96,6 @@ class RemoteFile(BaseFile):
     async def create_temporary_url(self, expire_after: float = 600) -> str:
         """To create a temporary valid URL for the file."""
         return await self._client.create_temporary_url(self.id, expire_after)
-
-    async def _read_contents_from_remote(self) -> bytes:
-        return await self._client.retrieve_file_contents(self.id)
 
 
 class RemoteFileClient(Closeable, metaclass=abc.ABCMeta):

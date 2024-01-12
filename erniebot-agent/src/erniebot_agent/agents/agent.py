@@ -97,10 +97,6 @@ class Agent(GradioMixin, BaseAgent):
         self.system = SystemMessage(system) if system is not None else system
         if self.system is not None:
             self.memory.set_system_message(self.system)
-            _logger.warning(
-                "The system message has been set for the agent,"
-                " and the system message configured in the chat model will be ignored."
-            )
 
         if callbacks is None:
             callbacks = get_default_callbacks()

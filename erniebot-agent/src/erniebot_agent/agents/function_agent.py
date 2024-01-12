@@ -140,8 +140,8 @@ class FunctionAgent(Agent):
             curr_step, new_messages = await self._step(chat_history, selected_tool=tool)
             if not isinstance(curr_step, EndStep):
                 chat_history.extend(new_messages)
-                num_steps_taken += 1
                 steps_taken.append(curr_step)
+                num_steps_taken += 1
             else:
                 # If tool choice not work, skip this round
                 _logger.warning(f"Selected tool [{tool.tool_name}] not work")

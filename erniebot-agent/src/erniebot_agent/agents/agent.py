@@ -105,8 +105,6 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
             self._callback_manager = CallbackManager(callbacks)
         self._file_manager = file_manager or get_default_file_manager()
         self._plugins: List[str] = list(plugins) if plugins is not None else []
-        if self._plugins:
-            raise ValueError("Currently, plugins are not supported.")
         self._init_file_needs_url()
         self._is_running = False
 

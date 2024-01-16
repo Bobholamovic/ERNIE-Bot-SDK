@@ -124,12 +124,12 @@ async def demo_function():
 ```python
 async def demo_function():
     # 需要在事件循环最开始配置，打开远程文件开关，注意需配置access token
-    await GlobalFileManagerHandler().configure(enable_remote_file=True)
+    GlobalFileManagerHandler().configure(enable_remote_file=True)
     ... # 此处省略一些其他的中间过程
     # 获取全局的FileManager，通过它来创建RemoteFile
-    file_manager = await GlobalFileManagerHandler().get()
+    file_manager = GlobalFileManagerHandler().get()
     # 从文件路径创建File, file_type可选择local或者remote，file_path需要具体到文件名，此处为remote的示例
-    remote_file = await file_manager.create_file_from_path(file_path='your_file_path', file_type='remote')
+    remote_file = file_manager.create_file_from_path(file_path='your_file_path', file_type='remote')
     # 获取File的id，用于以后的查找
     print(remote_file.id)
 ```
@@ -140,7 +140,7 @@ from erniebot_agent.file import GlobalFileManagerHandler
 async def demo_function():
     file_manager = GlobalFileManagerHandler().get()
     # 通过fileid搜索文件
-    file = file_manager.look_up_file_by_id(file_id='your_file_id')
+    file = await file_manager.look_up_file_by_id(file_id='your_file_id')
     # 读取file内容(bytes)
     file_content = await file.read_contents()
     # 写出到指定位置，your_willing_path需要具体到文件名

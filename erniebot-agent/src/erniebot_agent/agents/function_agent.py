@@ -68,7 +68,7 @@ class FunctionAgent(Agent):
         system: Optional[str] = None,
         callbacks: Optional[Union[CallbackManager, Iterable[CallbackHandler]]] = None,
         file_manager: Optional[FileManager] = None,
-        plugins: Optional[List[str]] = None,
+        plugins: Optional[Iterable[str]] = None,
         max_steps: Optional[int] = None,
         first_tools: Optional[Sequence[BaseTool]] = [],
     ) -> None:
@@ -76,29 +76,28 @@ class FunctionAgent(Agent):
 
         Args:
             llm: An LLM for the agent to use.
-            tools: A list of tools for the agent to use.
+            tools: The tools for the agent to use.
             memory: A memory object that equips the agent to remember chat
-                history. If `None`, a `WholeMemory` object will be used.
+                history. If not specified, a new WholeMemory object will be
+                instantiated.
             system: A message that tells the LLM how to interpret the
-                conversations. If `None`, the system message contained in
-                `memory` will be used.
+                conversations.
             callbacks: A list of callback handlers for the agent to use. If
                 `None`, a default list of callbacks will be used.
             file_manager: A file manager for the agent to interact with files.
                 If `None`, a global file manager that can be shared among
                 different components will be implicitly created and used.
-            plugins: A list of names of the plugins for the agent to use. If
-                `None`, the agent will use a default list of plugins. Set
-                `plugins` to `[]` to disable the use of plugins.
+            plugins: The names of the plugins for the agent to use. If `None`,
+                the agent will use a default list of plugins. Set `plugins` to
+                `[]` to disable the use of plugins.
             max_steps: The maximum number of steps in each agent run. If `None`,
                 use a default value.
-            first_tools: Tools scheduled to be called sequentially at the
+            first_tools: The tools arranged to be called sequentially at the
                 beginning of each agent run.
 
         Raises:
-            ValueError: if `max_steps` is non-positive.
-            RuntimeError: if tools in first_tools but not in tools list.
-
+            ValueError: If `max_steps` is not positive.
+            RuntimeError: If tools in `first_tools` do not exist in `tools`.
         """
         super().__init__(
             llm=llm,
@@ -128,9 +127,11 @@ class FunctionAgent(Agent):
         chat_history: List[Message] = []
         steps_taken: List[AgentStep] = []
 
-        run_input = await HumanMessage.create_with_files(
-            prompt, files or [], include_file_urls=self.file_needs_url
-        )
+        if files is not None:
+            prompt_with_file_reprs = await self.add_file_reprs_to_text(prompt, files)
+            run_input = HumanMessage(content=prompt_with_file_reprs)
+        else:
+            run_input = HumanMessage(content=prompt)
 
         num_steps_taken = 0
         chat_history.append(run_input)
@@ -139,8 +140,8 @@ class FunctionAgent(Agent):
             curr_step, new_messages = await self._step(chat_history, selected_tool=tool)
             if not isinstance(curr_step, EndStep):
                 chat_history.extend(new_messages)
-                num_steps_taken += 1
                 steps_taken.append(curr_step)
+                num_steps_taken += 1
             else:
                 # If tool choice not work, skip this round
                 _logger.warning(f"Selected tool [{tool.tool_name}] not work")
@@ -228,7 +229,7 @@ class FunctionAgent(Agent):
             text=last_message.content,
             chat_history=chat_history,
             steps=steps,
-            status=curr_step.info["end_reason"],
+            end_reason=curr_step.info["end_reason"],
         )
 
     def _create_stopped_response(
@@ -240,5 +241,5 @@ class FunctionAgent(Agent):
             text="Agent run stopped early.",
             chat_history=chat_history,
             steps=steps,
-            status="STOPPED",
+            end_reason="STOPPED",
         )

@@ -56,4 +56,5 @@ Examples:
 
 from erniebot_agent.file.file_manager import File, FileManager, get_default_file_manager
 from erniebot_agent.file.global_file_manager_handler import GlobalFileManagerHandler
-from erniebot_agent.file.remote_file import AIStudioFileClient
+from erniebot_agent.file.local_file import LocalFile
+from erniebot_agent.file.remote_file import AIStudioFileClient, RemoteFile

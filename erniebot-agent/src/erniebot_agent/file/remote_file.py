@@ -15,16 +15,20 @@
 import abc
 import inspect
 import json
+import logging
 import os
 import pathlib
 from typing import Any, Dict, Final, List, Optional
 
 import aiohttp
+from typing_extensions import Literal
 
 from erniebot_agent.file import protocol
 from erniebot_agent.file.base import BaseFile
 from erniebot_agent.utils.exceptions import FileError
 from erniebot_agent.utils.mixins import Closeable
+
+_logger = logging.getLogger(__name__)
 
 
 class RemoteFile(BaseFile):
@@ -36,19 +40,19 @@ class RemoteFile(BaseFile):
         filename (str): File name.
         byte_size (int): Size of the file in bytes.
         created_at (str): Timestamp indicating the file creation time.
-        purpose (str): Purpose or use case of the file,
-                       including "assistants" and "assistants_output".
+        purpose (str): Purpose or use case of the file.
         metadata (Dict[str, Any]): Additional metadata associated with the file.
         client (RemoteFileClient): The client of remote file.
 
     Methods:
         read_contents: Asynchronously read the contents of the local file.
         write_contents_to: Asynchronously write the file contents to a local path.
-        get_file_repr: Return a string representation for use in specific contexts.
         delete: Asynchronously delete the file from client.
         create_temporary_url: Asynchronously create a temporary URL for the file.
 
     """
+
+    type: Final[Literal["remote"]] = "remote"
 
     def __init__(
         self,
@@ -65,8 +69,6 @@ class RemoteFile(BaseFile):
         if validate_file_id:
             if not protocol.is_remote_file_id(id):
                 raise FileError(f"Invalid file ID: {id}")
-        if not protocol.is_valid_file_purpose(purpose):
-            raise ValueError(f"Invalid file purpose: {purpose}")
         super().__init__(
             id=id,
             filename=filename,
@@ -82,18 +84,18 @@ class RemoteFile(BaseFile):
         return self._client
 
     async def read_contents(self) -> bytes:
-        file_contents = await self._client.retrieve_file_contents(self.id)
-        return file_contents
+        return await self._client.retrieve_file_contents(self.id)
 
     async def delete(self) -> None:
         await self._client.delete_file(self.id)
 
+    async def get_repr_with_url(self) -> str:
+        url = await self.create_temporary_url()
+        return protocol.get_file_repr_with_url(self.id, url)
+
     async def create_temporary_url(self, expire_after: float = 600) -> str:
         """To create a temporary valid URL for the file."""
         return await self._client.create_temporary_url(self.id, expire_after)
-
-    def get_file_repr_with_url(self, url: str) -> str:
-        return f"{self.get_file_repr()}<url>{url}</url>"
 
 
 class RemoteFileClient(Closeable, metaclass=abc.ABCMeta):
@@ -161,11 +163,10 @@ class AIStudioFileClient(RemoteFileClient):
         if aiohttp_session is None:
             aiohttp_session = self._create_aiohttp_session()
         self._session = aiohttp_session
-        self._closed = False
 
     @property
     def closed(self) -> bool:
-        return self._closed
+        return self._session.closed
 
     async def upload_file(
         self, file_path: pathlib.Path, file_purpose: protocol.FilePurpose, file_metadata: Dict[str, Any]
@@ -178,7 +179,7 @@ class AIStudioFileClient(RemoteFileClient):
         with file_path.open("rb") as file:
             form_data = aiohttp.FormData()
             form_data.add_field("file", file, filename=file_path.name)
-            form_data.add_field("purpose", file_purpose)
+            form_data.add_field("purpose", file_purpose.value)
             form_data.add_field("meta", json.dumps(file_metadata))
             resp_bytes = await self._request(
                 "POST",
@@ -256,7 +257,7 @@ class AIStudioFileClient(RemoteFileClient):
         return result["fileUrl"]
 
     async def close(self) -> None:
-        if not self._closed:
+        if not self.closed:
             await self._session.close()
 
     def _create_aiohttp_session(self) -> aiohttp.ClientSession:
@@ -287,7 +288,7 @@ class AIStudioFileClient(RemoteFileClient):
             filename=dict_["fileName"],
             byte_size=dict_["bytes"],
             created_at=dict_["createTime"],
-            purpose=dict_["purpose"],
+            purpose=protocol.FilePurpose(dict_["purpose"]),
             metadata=metadata,
             client=self,
         )

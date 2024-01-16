@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
+from typing import List, Optional, Sequence
 
 from erniebot_agent.agents.base import BaseAgent
 from erniebot_agent.agents.schema import AgentResponse, LLMResponse, ToolResponse
 from erniebot_agent.chat_models.base import ChatModel
+from erniebot_agent.file import File
 from erniebot_agent.memory.messages import Message
 from erniebot_agent.tools.base import BaseTool
 
@@ -24,12 +25,13 @@ from erniebot_agent.tools.base import BaseTool
 class CallbackHandler(object):
     """The base class for callback handlers."""
 
-    async def on_run_start(self, agent: BaseAgent, prompt: str) -> None:
+    async def on_run_start(self, agent: BaseAgent, prompt: str, files: Optional[Sequence[File]]) -> None:
         """Called when the agent starts running.
 
         Args:
             agent: The agent that is running.
             prompt: The prompt that the agent uses as input.
+            files: The input files.
         """
 
     async def on_llm_start(self, agent: BaseAgent, llm: ChatModel, messages: List[Message]) -> None:

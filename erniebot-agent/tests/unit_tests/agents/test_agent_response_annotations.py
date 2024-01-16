@@ -1,5 +1,5 @@
 import unittest
-from typing import List, Literal
+from typing import List
 
 from erniebot_agent.agents.schema import AgentResponse, ToolInfo, ToolStep
 from erniebot_agent.file import File, FileManager
@@ -27,7 +27,7 @@ class TestAgentResponseAnnotations(unittest.IsolatedAsyncioTestCase):
                 output_files=self.files,
             ),
         )
-        agent_response = AgentResponse(text=text, chat_history=[], steps=step, status=Literal["FINISHED"])
+        agent_response = AgentResponse(text=text, chat_history=[], steps=step, end_reason="FINISHED")
         self.assertEqual(
             agent_response.annotations,
             {
@@ -57,7 +57,7 @@ class TestAgentResponseAnnotations(unittest.IsolatedAsyncioTestCase):
                 output_files=[self.file2],
             ),
         )
-        agent_response = AgentResponse(text=text, chat_history=[], steps=step, status=Literal["FINISHED"])
+        agent_response = AgentResponse(text=text, chat_history=[], steps=step, end_reason="FINISHED")
         self.assertEqual(
             agent_response.annotations,
             {
@@ -86,7 +86,7 @@ class TestAgentResponseAnnotations(unittest.IsolatedAsyncioTestCase):
                 output_files=[self.file2],
             ),
         )
-        agent_response = AgentResponse(text=text, chat_history=[], steps=step, status=Literal["FINISHED"])
+        agent_response = AgentResponse(text=text, chat_history=[], steps=step, end_reason="FINISHED")
 
         self.assertEqual(
             agent_response.annotations,

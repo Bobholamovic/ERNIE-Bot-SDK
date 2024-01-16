@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import inspect
 import pathlib
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Final, Literal
 
 import anyio
 
@@ -32,8 +33,7 @@ def create_local_file_from_path(
 
     Args:
         file_path (pathlib.Path): The path to the local file.
-        file_purpose (protocol.FilePurpose): The purpose or use case of the file,
-                                             including "assistants" and "assistants_output".
+        file_purpose (protocol.FilePurpose): The purpose or use case of the file.
         file_metadata (Dict[str, Any]): Additional metadata associated with the file.
 
     Returns:
@@ -70,17 +70,16 @@ class LocalFile(BaseFile):
         filename (str): File name.
         byte_size (int): Size of the file in bytes.
         created_at (str): Timestamp indicating the file creation time.
-        purpose (str): Purpose or use case of the file,
-                       including "assistants" and "assistants_output".
+        purpose (str): Purpose or use case of the file.
         metadata (Dict[str, Any]): Additional metadata associated with the file.
         path (pathlib.Path): The path to the local file.
 
     Methods:
         read_contents: Asynchronously read the contents of the local file.
         write_contents_to: Asynchronously write the file contents to a local path.
-        get_file_repr: Return a string representation for use in specific contexts.
-
     """
+
+    type: Final[Literal["local"]] = "local"
 
     def __init__(
         self,
@@ -114,8 +113,6 @@ class LocalFile(BaseFile):
         if validate_file_id:
             if not protocol.is_local_file_id(id):
                 raise ValueError(f"Invalid file ID: {id}")
-        if not protocol.is_valid_file_purpose(purpose):
-            raise ValueError(f"Invalid file purpose: {purpose}")
         super().__init__(
             id=id,
             filename=filename,
@@ -129,6 +126,12 @@ class LocalFile(BaseFile):
     async def read_contents(self) -> bytes:
         """Asynchronously read the contents of the local file."""
         return await anyio.Path(self.path).read_bytes()
+
+    async def delete(self) -> None:
+        await anyio.Path(self.path).unlink()
+
+    async def get_repr_with_url(self) -> str:
+        raise TypeError(f"`{self.__class__.__name__}.{inspect.stack()[0][3]}` is not supported.")
 
     def _get_attrs_str(self) -> str:
         attrs_str = super()._get_attrs_str()

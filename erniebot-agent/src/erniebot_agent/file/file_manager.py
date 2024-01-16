@@ -26,6 +26,7 @@ from typing import (
     Deque,
     Dict,
     Generator,
+    Iterable,
     List,
     Literal,
     Mapping,
@@ -78,7 +79,6 @@ class FileManager(Closeable, Noncopyable):
         create_file_from_bytes: Create a file from bytes.
         retrieve_remote_file_by_id: Retrieve a remote file by its ID.
         look_up_file_by_id: Look up a file by its ID.
-        list_remote_files: List remote files.
 
     """
 
@@ -182,7 +182,7 @@ class FileManager(Closeable, Noncopyable):
         self,
         file_path: FilePath,
         *,
-        file_purpose: protocol.FilePurpose = "assistants",
+        file_purpose: protocol.FilePurpose = protocol.FilePurpose.ASSISTANTS,
         file_metadata: Optional[Dict[str, Any]] = None,
         file_type: Optional[Literal["local", "remote"]] = None,
     ) -> File:
@@ -315,7 +315,7 @@ class FileManager(Closeable, Noncopyable):
         file_contents: bytes,
         filename: str,
         *,
-        file_purpose: protocol.FilePurpose = "assistants",
+        file_purpose: protocol.FilePurpose = protocol.FilePurpose.ASSISTANTS,
         file_metadata: Optional[Dict[str, Any]] = None,
         file_type: Optional[Literal["local", "remote"]] = None,
     ) -> File:
@@ -386,11 +386,6 @@ class FileManager(Closeable, Noncopyable):
             self._file_registry.register_file(file, allow_overwrite=False)
             return file
 
-    async def list_remote_files(self) -> List[RemoteFile]:
-        self.ensure_not_closed()
-        files = await self._get_remote_file_client().list_files()
-        return files
-
     async def look_up_file_by_id(self, file_id: str) -> File:
         """
         Look up a file by its ID.
@@ -415,7 +410,7 @@ class FileManager(Closeable, Noncopyable):
             raise FileError(f"File with ID {repr(file_id)} not found. Please check if `file_id` is correct.")
         return file
 
-    async def list_registered_files(self) -> List[File]:
+    async def list_files(self) -> List[File]:
         """
         List remote files.
 
@@ -465,6 +460,16 @@ class FileManager(Closeable, Noncopyable):
             self.ensure_not_closed()
             return await self._sniff_and_extract_files_from_text(text)
 
+    async def create_file_reprs(self, files: Iterable[File], *, include_urls: bool = True) -> List[str]:
+        file_reprs: List[str] = []
+        for file in files:
+            if include_urls:
+                file_repr = await file.get_repr_with_url()
+            else:
+                file_repr = file.get_repr()
+            file_reprs.append(file_repr)
+        return file_reprs
+
     async def _create_local_file_from_path(
         self,
         file_path: pathlib.Path,
@@ -497,13 +502,13 @@ class FileManager(Closeable, Noncopyable):
                 file = self._fully_managed_files.popleft()
             except IndexError:
                 break
-            if isinstance(file, RemoteFile):
+            if file.type == "remote":
                 # FIXME: Currently this is not supported.
                 # await file.delete()
                 pass
-            elif isinstance(file, LocalFile):
+            elif file.type == "local":
                 assert self._save_dir.resolve() in file.path.resolve().parents
-                await anyio.Path(file.path).unlink()
+                await file.delete()
             else:
                 assert_never()
             self._file_registry.unregister_file(file)

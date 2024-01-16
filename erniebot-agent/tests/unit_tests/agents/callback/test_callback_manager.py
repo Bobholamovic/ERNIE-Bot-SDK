@@ -30,7 +30,7 @@ async def test_callback_manager_hit():
     handler = CountingCallbackHandler()
     callback_manager = CallbackManager(handlers=[handler])
 
-    await callback_manager.on_run_start(agent, "")
+    await callback_manager.on_run_start(agent, "", None)
     assert handler.run_starts == 1
 
     await callback_manager.on_llm_start(agent, llm, [])
@@ -59,7 +59,7 @@ async def test_callback_manager_hit():
     assert handler.run_errors == 1
 
     await callback_manager.on_run_end(
-        agent, AgentResponse(text="", chat_history=[], steps=[], status="FINISHED")
+        agent, AgentResponse(text="", chat_history=[], steps=[], end_reason="FINISHED")
     )
     assert handler.run_ends == 1
 

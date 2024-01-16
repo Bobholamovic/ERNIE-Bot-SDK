@@ -17,7 +17,7 @@ import asyncio
 import base64
 import os
 import time
-from typing import Any, AsyncGenerator, List, Optional, Tuple, Union
+from typing import Any, AsyncGenerator, List, Optional, Sequence, Tuple, Union
 
 import gradio as gr
 
@@ -98,7 +98,7 @@ class GameAgent(Agent):
         base64_encoded = base64.b64encode(img_byte).decode("utf-8")
         return base64_encoded
 
-    async def _run(self, prompt: str, files: Optional[List[File]] = None) -> AgentResponse:
+    async def _run(self, prompt: str, files: Optional[Sequence[File]] = None) -> AgentResponse:
         raise RuntimeError(("Only support for stream mode, please use _run_stream instead."))
 
     async def _run_stream(self, prompt: str) -> AsyncGenerator:
@@ -110,7 +110,7 @@ class GameAgent(Agent):
 
         actual_query = prompt + "根据我的选择继续生成一轮仅含包括<场景描述>、<场景图片>和<选择>的互动。"
         messages = self.memory.get_messages() + [HumanMessage(actual_query)]
-        response = await self.llm.chat(messages, stream=True, system=self.system_message.content)
+        response = await self.llm.chat(messages, stream=True, system=self.system.content)
 
         apply = False
         res = ""

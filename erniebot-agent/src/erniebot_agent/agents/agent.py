@@ -26,6 +26,7 @@ from erniebot_agent.file import (
     FileManager,
     GlobalFileManagerHandler,
     get_default_file_manager,
+    protocol,
 )
 from erniebot_agent.memory import Memory, WholeMemory
 from erniebot_agent.memory.messages import Message, SystemMessage
@@ -61,15 +62,16 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
         system: Optional[str] = None,
         callbacks: Optional[Union[CallbackManager, Iterable[CallbackHandler]]] = None,
         file_manager: Optional[FileManager] = None,
-        plugins: Optional[List[str]] = None,
+        plugins: Optional[Iterable[str]] = None,
     ) -> None:
         """Initialize an agent.
 
         Args:
             llm: An LLM for the agent to use.
-            tools: Tools for the agent to use.
+            tools: The tools for the agent to use.
             memory: A memory object that equips the agent to remember chat
-                history. If not specified, a new WholeMemory object will be instantiated.
+                history. If not specified, a new WholeMemory object will be
+                instantiated.
             system: A message that tells the LLM how to interpret the
                 conversations.
             callbacks: A list of callback handlers for the agent to use. If
@@ -77,9 +79,9 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
             file_manager: A file manager for the agent to interact with files.
                 If `None`, a global file manager that can be shared among
                 different components will be implicitly created and used.
-            plugins: A list of names of the plugins for the agent to use. If
-                `None`, the agent will use a default list of plugins. Set
-                `plugins` to `[]` to disable the use of plugins.
+            plugins: The names of the plugins for the agent to use. If `None`,
+                the agent will use a default list of plugins. Set `plugins` to
+                `[]` to disable the use of plugins.
         """
         super().__init__()
         self.llm = llm
@@ -102,7 +104,7 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
         else:
             self._callback_manager = CallbackManager(callbacks)
         self._file_manager = file_manager or get_default_file_manager()
-        self._plugins = plugins
+        self._plugins: List[str] = list(plugins) if plugins is not None else []
         self._init_file_needs_url()
         self._is_running = False
 
@@ -113,15 +115,17 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
         Args:
             prompt: A natural language text describing the task that the agent
                 should perform.
-            files: A list of files that the agent can use to perform the task.
+            files: A sequence of files that the agent can use to perform the
+                task.
 
         Returns:
-            Response from the agent.
+            The agent's response, containing the final answer and intemediate
+            data.
         """
         if self._is_running:
             raise RuntimeError("The agent is already running.")
         self._is_running = True
-        await self._callback_manager.on_run_start(agent=self, prompt=prompt)
+        await self._callback_manager.on_run_start(agent=self, prompt=prompt, files=files)
         try:
             agent_resp = await self._run(prompt, files)
         except BaseException as e:
@@ -160,20 +164,20 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
 
     @final
     async def run_tool(self, tool_name: str, tool_args: str) -> ToolResponse:
-        """Run the specified tool asynchronously.
+        """Call the specified tool asynchronously.
 
         Args:
-            tool_name: The name of the tool to run.
+            tool_name: The name of the tool to call.
             tool_args: The tool arguments in JSON format.
 
         Returns:
-            Response from the tool.
+            The tool's response, containing the result of the tool call.
         """
         tool = self._tool_manager.get_tool(tool_name)
         await self._callback_manager.on_tool_start(agent=self, tool=tool, input_args=tool_args)
         try:
             tool_resp = await self._run_tool(tool, tool_args)
-        except (Exception, KeyboardInterrupt) as e:
+        except BaseException as e:
             await self._callback_manager.on_tool_error(agent=self, tool=tool, error=e)
             raise e
         else:
@@ -219,6 +223,20 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
             file_manager = self._file_manager
         return file_manager
 
+    async def add_file_reprs_to_text(self, text: str, files: Sequence[File]) -> str:
+        def _append_files_repr_to_text(text: str, files_repr: str) -> str:
+            return f"{text}\n{files_repr}"
+
+        if len(files) > 0:
+            if len(protocol.extract_file_ids(text)) > 0:
+                _logger.warning("File IDs were found in the text. The provided files will be ignored.")
+            else:
+                file_manager = self.get_file_manager()
+                file_reprs = await file_manager.create_file_reprs(files, include_urls=self.file_needs_url)
+                files_repr = "\n".join(file_reprs)
+                text = _append_files_repr_to_text(text, files_repr)
+        return text
+
     @abc.abstractmethod
     async def _run(self, prompt: str, files: Optional[Sequence[File]] = None) -> AgentResponse:
         raise NotImplementedError
@@ -246,9 +264,9 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
     async def _run_tool(self, tool: BaseTool, tool_args: str) -> ToolResponse:
         parsed_tool_args = self._parse_tool_args(tool_args)
         file_manager = self.get_file_manager()
-        # XXX: Sniffing is less efficient and probably unnecessary.
-        # Can we make a protocol to statically recognize file inputs and outputs
-        # or can we have the tools introspect about this?
+        # XXX: Sniffing is error-prone and less efficient. Further, the result
+        # can be incorrect. Can we make a protocol to statically recognize file
+        # inputs and outputs or can we have the tools introspect about this?
         input_files = await file_manager.sniff_and_extract_files_from_obj(parsed_tool_args)
         tool_ret = await tool(**parsed_tool_args)
         if isinstance(tool_ret, dict):
@@ -263,10 +281,10 @@ class Agent(GradioMixin, BaseAgent[BaseERNIEBot]):
 
     def _init_file_needs_url(self):
         self.file_needs_url = False
-        if self._plugins:
-            for plugin in self._plugins:
-                if plugin not in _PLUGINS_WO_FILE_IO:
-                    self.file_needs_url = True
+        for plugin in self._plugins:
+            if plugin not in _PLUGINS_WO_FILE_IO:
+                self.file_needs_url = True
+                break
 
     def _parse_tool_args(self, tool_args: str) -> Dict[str, Any]:
         try:

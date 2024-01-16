@@ -268,13 +268,12 @@ class CustomAgent(Agent):
             ...
             steps_taken.append(tool_step)
             # 假设当前agent只执行至多一次行动，此时构造`AgentResponse`并返回
-            # 如果agent已经完成任务，将`status`设置为"FINISHED"
-            # 如果agent尚未完成任务，本次运行被提前终止，则将`status`设置为"STOPPED"
+            # 如果agent已经完成任务，将`end_reason`设置为"FINISHED"
             return AgentResponse(
                 text=self.memory.get_messages()[-1].content,
                 chat_history=chat_history,
                 steps=steps_taken,
-                status="FINISHED",
+                end_reason="FINISHED",
             )
 
         # 其它处理逻辑

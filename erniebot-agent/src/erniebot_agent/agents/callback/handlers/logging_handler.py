@@ -63,7 +63,7 @@ class LoggingHandler(CallbackHandler):
         """Called to log when the LLM starts running."""
         # TODO: Prettier messages
         self._agent_info(
-            "%s is about to start running with input:\n%s",
+            "%s is about to start running, and the last input message is:\n%s",
             llm.__class__.__name__,
             ColoredContent(messages[-1]),
             subject="LLM",

@@ -6,12 +6,9 @@ from pydantic import Field
 
 from erniebot_agent.agents.function_agent import FunctionAgent
 from erniebot_agent.agents.schema import (
-    DEFAULT_FINISH_STEP,
     AgentResponse,
+    AgentRunEnd,
     AgentStep,
-    EndStep,
-    PluginStep,
-    ToolAction,
     ToolInfo,
     ToolResponse,
     ToolStep,
@@ -149,11 +146,11 @@ class FunctionAgentWithRetrieval(FunctionAgent):
                 await self._callback_manager.on_tool_error(agent=self, tool=self.search_tool, error=e)
                 raise
             await self._callback_manager.on_tool_end(agent=self, tool=self.search_tool, response=tool_resp)
-            response = self._create_finished_response(
-                chat_history, steps_taken, curr_step=DEFAULT_FINISH_STEP
+            response = await self._finalize_run(
+                AgentRunEnd(response=chat_history[-1].content, end_reason="FINISHED"),
+                chat_history,
+                steps_taken,
             )
-            self.memory.add_message(chat_history[0])
-            self.memory.add_message(chat_history[-1])
             return response
         else:
             _logger.info(
@@ -231,11 +228,9 @@ class FunctionAgentWithRetrievalTool(FunctionAgent):
                 )
             )
 
-            # Knowledge Retrieval Tool
-            action = ToolAction(tool_name=self.search_tool.tool_name, tool_args=tool_args)
             # return response
             tool_ret_json = json.dumps({"documents": outputs}, ensure_ascii=False)
-            next_step_input = FunctionMessage(name=action.tool_name, content=tool_ret_json)
+            next_step_input = FunctionMessage(name=self.search_tool.tool_name, content=tool_ret_json)
             chat_history.append(next_step_input)
             tool_resp = ToolResponse(json=tool_ret_json, input_files=[], output_files=[])
             steps_taken.append(
@@ -248,28 +243,16 @@ class FunctionAgentWithRetrievalTool(FunctionAgent):
             )
             await self._callback_manager.on_tool_end(agent=self, tool=self.search_tool, response=tool_resp)
 
-            num_steps_taken = 0
-            while num_steps_taken < self.max_steps:
-                curr_step, new_messages = await self._step(chat_history)
+            curr_iter = 0
+            while True:
+                new_steps, new_messages = await self._take_next_steps(chat_history, curr_iter)
                 chat_history.extend(new_messages)
-                if isinstance(curr_step, ToolStep):
-                    steps_taken.append(curr_step)
-
-                elif isinstance(curr_step, PluginStep):
-                    steps_taken.append(curr_step)
-                    # 预留 调用了Plugin之后不结束的接口
-
-                    # 此处为调用了Plugin之后直接结束的Plugin
-                    curr_step = DEFAULT_FINISH_STEP
-
-                if isinstance(curr_step, EndStep):
-                    response = self._create_finished_response(chat_history, steps_taken, curr_step)
-                    self.memory.add_message(chat_history[0])
-                    self.memory.add_message(chat_history[-1])
-                    return response
-                num_steps_taken += 1
-            response = self._create_stopped_response(chat_history, steps_taken)
-            return response
+                for step in new_steps:
+                    if isinstance(step, AgentRunEnd):
+                        return await self._finalize_run(step, chat_history, steps_taken)
+                    else:
+                        steps_taken.append(step)
+                curr_iter += 1
         else:
             _logger.info(
                 f"Irrelevant retrieval results. Fallbacking to FunctionAgent for the query: {prompt}"
@@ -343,10 +326,9 @@ class FunctionAgentWithRetrievalScoreTool(FunctionAgent):
             )
 
             # Knowledge Retrieval Tool
-            action = ToolAction(tool_name=self.search_tool.tool_name, tool_args=tool_args)
             # return response
             tool_ret_json = json.dumps({"documents": outputs}, ensure_ascii=False)
-            next_step_input = FunctionMessage(name=action.tool_name, content=tool_ret_json)
+            next_step_input = FunctionMessage(name=self.search_tool.tool_name, content=tool_ret_json)
             chat_history.append(next_step_input)
             tool_resp = ToolResponse(json=tool_ret_json, input_files=[], output_files=[])
             steps_taken.append(
@@ -358,40 +340,16 @@ class FunctionAgentWithRetrievalScoreTool(FunctionAgent):
                 )
             )
             await self._callback_manager.on_tool_end(agent=self, tool=self.search_tool, response=tool_resp)
-            num_steps_taken = 0
-            while num_steps_taken < self.max_steps:
-                curr_step, new_messages = await self._step(chat_history)
+            curr_iter = 0
+            while True:
+                new_steps, new_messages = await self._take_next_steps(chat_history, curr_iter)
                 chat_history.extend(new_messages)
-                if isinstance(curr_step, ToolStep):
-                    steps_taken.append(curr_step)
-
-                elif isinstance(curr_step, PluginStep):
-                    steps_taken.append(curr_step)
-                    # 预留 调用了Plugin之后不结束的接口
-
-                    # 此处为调用了Plugin之后直接结束的Plugin
-                    curr_step = DEFAULT_FINISH_STEP
-
-                if isinstance(curr_step, EndStep):  # plugin with action
-                    response = self._create_finished_response(chat_history, steps_taken, curr_step=curr_step)
-                    self.memory.add_message(chat_history[0])
-                    self.memory.add_message(chat_history[-1])
-                    return response
-                num_steps_taken += 1
-            response = self._create_stopped_response(chat_history, steps_taken)
-            # while num_steps_taken < self.max_steps:
-            #     curr_step_output = await self._step(
-            #         next_step_input, chat_history, actions_taken, files_involved
-            #     )
-            #     if curr_step_output is None:
-            #         response = self._create_finished_response(chat_history, actions_taken, files_involved)
-            #         self.memory.add_message(chat_history[0])
-            #         self.memory.add_message(chat_history[-1])
-            #         return response
-            #     num_steps_taken += 1
-            # # response = self._create_stopped_response(chat_history, actions_taken, files_involved)
-            # self._create_stopped_response(chat_history, steps_taken)
-            return response
+                for step in new_steps:
+                    if isinstance(step, AgentRunEnd):
+                        return await self._finalize_run(step, chat_history, steps_taken)
+                    else:
+                        steps_taken.append(step)
+                curr_iter += 1
         else:
             _logger.info(
                 f"Irrelevant retrieval results. Fallbacking to FunctionAgent for the query: {prompt}"

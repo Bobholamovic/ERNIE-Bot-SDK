@@ -85,11 +85,14 @@ class Agent(GradioMixin, BaseAgent):
                 `[]` to disable the use of plugins.
         """
         super().__init__()
+
         self.llm = llm
+
         if isinstance(tools, ToolManager):
             self._tool_manager = tools
         else:
             self._tool_manager = ToolManager(tools)
+
         if memory is None:
             memory = self._create_default_memory()
         self.memory = memory
@@ -104,9 +107,12 @@ class Agent(GradioMixin, BaseAgent):
             self._callback_manager = callbacks
         else:
             self._callback_manager = CallbackManager(callbacks)
+
         self._file_manager = file_manager or get_default_file_manager()
+
         self._plugins: List[str] = list(plugins) if plugins is not None else []
         self._init_file_needs_url()
+
         self._is_running = False
 
     @final

@@ -131,7 +131,9 @@ class LocalFile(BaseFile):
         await anyio.Path(self.path).unlink()
 
     async def get_repr_with_url(self) -> str:
-        raise TypeError(f"`{self.__class__.__name__}.{inspect.stack()[0][3]}` is not supported.")
+        raise NotImplementedError(
+            f"Currently, `{self.__class__.__name__}.{inspect.stack()[0][3]}` is not supported."
+        )
 
     def _get_attrs_str(self) -> str:
         attrs_str = super()._get_attrs_str()

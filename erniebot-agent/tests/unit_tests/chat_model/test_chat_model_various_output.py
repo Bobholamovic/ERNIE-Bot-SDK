@@ -5,13 +5,13 @@ from erniebot_agent.chat_models.erniebot import convert_response_to_output
 from erniebot_agent.memory import HumanMessage
 from erniebot_agent.memory.messages import AIMessage
 from tests.unit_tests.testing_utils.mocks.mock_chat_models import (
-    FakeERNIEBotWithPresetResponses,
+    FakeChatModelWithPresetResponses,
 )
 
 
 # 1. fake various output from erniebot
 @pytest.fixture
-def fake_erniebot_with_search_info():
+def fake_chat_model_with_search_info():
     rcode = (200,)
     rbody = {
         "id": "as-a4svw1crr0",
@@ -37,13 +37,13 @@ def fake_erniebot_with_search_info():
         "Transfer-Encoding": "chunked",
     }
     fake_response_with_search_info = ChatCompletionResponse(rcode, rbody, rheaders)
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_response_with_search_info, AIMessage)]
     )
 
 
 @pytest.fixture
-def fake_erniebot_with_plugin_info():  # withfile plugins
+def fake_chat_model_with_plugin_info():  # withfile plugins
     rcode = (200,)
     rbody = {
         "id": "as-4tpm80hx7c",
@@ -163,13 +163,13 @@ def fake_erniebot_with_plugin_info():  # withfile plugins
     }
     fake_response_with_plugin_info = ChatCompletionResponse(rcode, rbody, rheaders)
 
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_response_with_plugin_info, AIMessage)]
     )
 
 
 @pytest.fixture
-def fake_erniebot_with_function_call():
+def fake_chat_model_with_function_call():
     rcode = 200
     rbody = {
         "id": "as-a4svw1crr0",
@@ -199,13 +199,13 @@ def fake_erniebot_with_function_call():
         "Transfer-Encoding": "chunked",
     }
     fake_function_call_response = ChatCompletionResponse(rcode, rbody, rheaders)
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_function_call_response, AIMessage)]
     )
 
 
 @pytest.fixture
-def fake_erniebot_with_vanilla_output():
+def fake_chat_model_with_vanilla_output():
     rcode = 200
     rbody = {
         "id": "as-ieb0xfdmsv",
@@ -230,17 +230,17 @@ def fake_erniebot_with_vanilla_output():
         "Transfer-Encoding": "chunked",
     }
     fake_vanilla_message_response = ChatCompletionResponse(rcode, rbody, rheaders)
-    return FakeERNIEBotWithPresetResponses(
+    return FakeChatModelWithPresetResponses(
         [convert_response_to_output(fake_vanilla_message_response, AIMessage)]
     )
 
 
 # 2. tests each output independently
 @pytest.mark.asyncio
-async def test_erniebot_with_search_info(fake_erniebot_with_search_info):
-    fake_erniebot = fake_erniebot_with_search_info
+async def test_erniebot_with_search_info(fake_chat_model_with_search_info):
+    fake_chat_model = fake_chat_model_with_search_info
     messages = [HumanMessage("今天深圳天气怎么样？")]
-    response = await fake_erniebot.chat(
+    response = await fake_chat_model.chat(
         messages,
     )
 
@@ -248,10 +248,10 @@ async def test_erniebot_with_search_info(fake_erniebot_with_search_info):
 
 
 @pytest.mark.asyncio
-async def test_erniebot_with_plugin_info(fake_erniebot_with_plugin_info):
-    fake_erniebot = fake_erniebot_with_plugin_info
+async def test_erniebot_with_plugin_info(fake_chat_model_with_plugin_info):
+    fake_chat_model = fake_chat_model_with_plugin_info
     messages = [HumanMessage("今天深圳天气怎么样？")]
-    response = await fake_erniebot.chat(
+    response = await fake_chat_model.chat(
         messages,
     )
 
@@ -259,10 +259,10 @@ async def test_erniebot_with_plugin_info(fake_erniebot_with_plugin_info):
 
 
 @pytest.mark.asyncio
-async def test_erniebot_with_function_call(fake_erniebot_with_function_call):
-    fake_erniebot = fake_erniebot_with_function_call
+async def test_erniebot_with_function_call(fake_chat_model_with_function_call):
+    fake_chat_model = fake_chat_model_with_function_call
     messages = [HumanMessage("今天深圳天气怎么样？")]
-    response = await fake_erniebot.chat(
+    response = await fake_chat_model.chat(
         messages,
     )
 
@@ -270,10 +270,10 @@ async def test_erniebot_with_function_call(fake_erniebot_with_function_call):
 
 
 @pytest.mark.asyncio
-async def test_erniebot_with_vanilla_output(fake_erniebot_with_vanilla_output):
-    fake_erniebot = fake_erniebot_with_vanilla_output
+async def test_erniebot_with_vanilla_output(fake_chat_model_with_vanilla_output):
+    fake_chat_model = fake_chat_model_with_vanilla_output
     messages = [HumanMessage("今天深圳天气怎么样？")]
-    response = await fake_erniebot.chat(
+    response = await fake_chat_model.chat(
         messages,
     )
 

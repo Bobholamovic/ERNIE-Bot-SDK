@@ -26,7 +26,6 @@
 | 属性       | 类型           | 描述                                                      |
 | ---------- | -------------- | ------------------------------------------------------- |
 | model         | str          | 文心一言模型的名称，支持"ernie-3.5", "ernie-turbo", "ernie-4.0", "ernie-longtext"   |
-| default_chat_kwargs | Dict[str, Any] | 设置调用文心一言模型的默认参数，支持`temperature`,`top_p`等，具体参考[文档](https://github.com/PaddlePaddle/ERNIE-SDK/blob/develop/docs/sdk/api_reference/chat_completion.md)|
 
 | 方法              | 描述                                                                  |
 | ----------------- | -------------------------------------------------------------------- |

@@ -1,39 +1,37 @@
 import pytest
 
+from erniebot_agent.chat_models import ERNIEBot
 from erniebot_agent.memory import HumanMessage
 from erniebot_agent.memory.messages import SystemMessage
-from tests.unit_tests.testing_utils.mocks.mock_chat_models import (
-    FakeERNIEBotWithAllInput,
-)
 
 
 @pytest.fixture
-def fake_erniebot_with_aistudio_backend_with_atoken():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+def erniebot_with_aistudio_backend_with_atoken():
+    erniebot = ERNIEBot(
         model="ernie-3.5",
         api_type="aistudio",
         access_token="access_token",
         enable_multi_step_tool_call=False,
         enable_human_clarify=False,
     )
-    return fake_erniebot
+    return erniebot
 
 
 @pytest.fixture
-def fake_erniebot_with_aistudio_backend_wo_atoken():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+def erniebot_with_aistudio_backend_wo_atoken():
+    erniebot = ERNIEBot(
         model="ernie-3.5",
         api_type="aistudio",
         access_token=None,
         enable_multi_step_tool_call=False,
         enable_human_clarify=False,
     )
-    return fake_erniebot
+    return erniebot
 
 
 @pytest.fixture
-def fake_erniebot_with_qianfan_backend_aksk():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+def erniebot_with_qianfan_backend_aksk():
+    erniebot = ERNIEBot(
         model="ernie-3.5",
         api_type="qianfan",
         access_token="access_token",
@@ -42,12 +40,12 @@ def fake_erniebot_with_qianfan_backend_aksk():
         enable_multi_step_tool_call=False,
         enable_human_clarify=False,
     )
-    return fake_erniebot
+    return erniebot
 
 
 @pytest.fixture
-def fake_erniebot_with_qianfan_no_access_token_backend_aksk():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+def erniebot_with_qianfan_no_access_token_backend_aksk():
+    erniebot = ERNIEBot(
         model="ernie-3.5",
         api_type="qianfan",
         access_token=None,
@@ -56,27 +54,27 @@ def fake_erniebot_with_qianfan_no_access_token_backend_aksk():
         enable_multi_step_tool_call=False,
         enable_human_clarify=False,
     )
-    return fake_erniebot
+    return erniebot
 
 
 @pytest.fixture
-def fake_erniebot_with_qianfan_no_access_token_backend():
-    fake_erniebot = FakeERNIEBotWithAllInput(
+def erniebot_with_qianfan_no_access_token_backend():
+    erniebot = ERNIEBot(
         model="ernie-3.5",
         api_type="qianfan",
         access_token="access_token",
         enable_multi_step_tool_call=False,
         enable_human_clarify=False,
     )
-    return fake_erniebot
+    return erniebot
 
 
 @pytest.mark.asyncio
-async def test_erniebot_aistudio_backend_with_atoken_base(fake_erniebot_with_aistudio_backend_with_atoken):
-    fake_erniebot = fake_erniebot_with_aistudio_backend_with_atoken
+async def test_erniebot_aistudio_backend_with_atoken_base(erniebot_with_aistudio_backend_with_atoken):
+    erniebot = erniebot_with_aistudio_backend_with_atoken
     messages = [HumanMessage("今天深圳天气怎么样？")]
 
-    cfg_dict = fake_erniebot._generate_config(
+    cfg_dict = erniebot._generate_config(
         messages,
         functions=[{}],
         top_p=5,
@@ -100,12 +98,12 @@ async def test_erniebot_aistudio_backend_with_atoken_base(fake_erniebot_with_ais
 
 @pytest.mark.asyncio
 async def test_erniebot_aistudio_backend_with_atoken_no_plugin(
-    fake_erniebot_with_aistudio_backend_with_atoken,
+    erniebot_with_aistudio_backend_with_atoken,
 ):
-    fake_erniebot = fake_erniebot_with_aistudio_backend_with_atoken
+    erniebot = erniebot_with_aistudio_backend_with_atoken
     messages = [HumanMessage("今天深圳天气怎么样？")]
 
-    cfg_dict = fake_erniebot._generate_config(
+    cfg_dict = erniebot._generate_config(
         messages,
         functions=[{}],
         top_p=5,
@@ -128,11 +126,11 @@ async def test_erniebot_aistudio_backend_with_atoken_no_plugin(
 
 
 @pytest.mark.asyncio
-async def test_erniebot_aistudio_backend_wo_atoken_base(fake_erniebot_with_aistudio_backend_wo_atoken):
-    fake_erniebot = fake_erniebot_with_aistudio_backend_wo_atoken
+async def test_erniebot_aistudio_backend_wo_atoken_base(erniebot_with_aistudio_backend_wo_atoken):
+    erniebot = erniebot_with_aistudio_backend_wo_atoken
     messages = [HumanMessage("今天深圳天气怎么样？")]
 
-    cfg_dict = fake_erniebot._generate_config(
+    cfg_dict = erniebot._generate_config(
         messages,
         functions=[{}],
         top_p=5,
@@ -155,11 +153,11 @@ async def test_erniebot_aistudio_backend_wo_atoken_base(fake_erniebot_with_aistu
 
 
 @pytest.mark.asyncio
-async def test_erniebot_qianfan_backend_with_atoken_base(fake_erniebot_with_qianfan_backend_aksk):
-    fake_erniebot = fake_erniebot_with_qianfan_backend_aksk
+async def test_erniebot_qianfan_backend_with_atoken_base(erniebot_with_qianfan_backend_aksk):
+    erniebot = erniebot_with_qianfan_backend_aksk
     messages = [HumanMessage("今天深圳天气怎么样？")]
 
-    cfg_dict = fake_erniebot._generate_config(
+    cfg_dict = erniebot._generate_config(
         messages,
         functions=[{}],
         top_p=5,
@@ -183,12 +181,12 @@ async def test_erniebot_qianfan_backend_with_atoken_base(fake_erniebot_with_qian
 
 @pytest.mark.asyncio
 async def test_erniebot_qianfan_backend_wo_atoken_base(
-    fake_erniebot_with_qianfan_no_access_token_backend_aksk,
+    erniebot_with_qianfan_no_access_token_backend_aksk,
 ):
-    fake_erniebot = fake_erniebot_with_qianfan_no_access_token_backend_aksk
+    erniebot = erniebot_with_qianfan_no_access_token_backend_aksk
     messages = [HumanMessage("今天深圳天气怎么样？")]
 
-    cfg_dict = fake_erniebot._generate_config(
+    cfg_dict = erniebot._generate_config(
         messages,
         functions=[{}],
         top_p=5,
@@ -212,12 +210,12 @@ async def test_erniebot_qianfan_backend_wo_atoken_base(
 
 @pytest.mark.asyncio
 async def test_erniebot_qianfan_backend_with_atoken_noaksk(
-    fake_erniebot_with_qianfan_no_access_token_backend,
+    erniebot_with_qianfan_no_access_token_backend,
 ):
-    fake_erniebot = fake_erniebot_with_qianfan_no_access_token_backend
+    erniebot = erniebot_with_qianfan_no_access_token_backend
     messages = [HumanMessage("今天深圳天气怎么样？")]
 
-    cfg_dict = fake_erniebot._generate_config(
+    cfg_dict = erniebot._generate_config(
         messages,
         functions=[{}],
         top_p=5,

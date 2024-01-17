@@ -240,7 +240,9 @@ class AIStudioFileClient(RemoteFileClient):
         return files
 
     async def delete_file(self, file_id: str) -> None:
-        raise TypeError(f"`{self.__class__.__name__}.{inspect.stack()[0][3]}` is not supported.")
+        raise NotImplementedError(
+            f"Currently, `{self.__class__.__name__}.{inspect.stack()[0][3]}` is not supported."
+        )
 
     async def create_temporary_url(self, file_id: str, expire_after: float) -> str:
         url = self._get_url(self._RETRIEVE_ENDPOINT).format(file_id=file_id)

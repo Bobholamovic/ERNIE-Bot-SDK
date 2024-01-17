@@ -1,5 +1,4 @@
 from erniebot_agent.chat_models.base import ChatModel
-from erniebot_agent.chat_models.erniebot import BaseERNIEBot, ERNIEBot
 from erniebot_agent.memory import AIMessage
 
 
@@ -11,45 +10,46 @@ class FakeSimpleChatModel(ChatModel):
     def response(self):
         return AIMessage(content="Text response", function_call=None, token_usage=None)
 
-    async def chat(self, messages, *, stream=False, **kwargs):
+    async def chat(
+        self,
+        messages,
+        *,
+        stream=False,
+        functions=None,
+        system=None,
+        plugins=None,
+        tool_choice=None,
+        **kwargs,
+    ):
         if stream:
             raise ValueError("Streaming is not supported.")
-        if "system" in kwargs and kwargs["system"] is not None:
-            response = f"Recieved system message: {kwargs['system']}"
+        if system is not None:
+            response = f"Recieved system message: {system}"
             return AIMessage(content=response, function_call=None, token_usage=None)
+        # Ignore other arguments
         return self.response
 
 
-class FakeERNIEBotWithPresetResponses(BaseERNIEBot):
+class FakeChatModelWithPresetResponses(ChatModel):
     def __init__(self, responses):
         super().__init__("erniebot_with_preset_responses")
         self.responses = responses
         self._counter = 0
 
-    async def chat(self, messages, *, stream=False, functions=None, **kwargs):
+    async def chat(
+        self,
+        messages,
+        *,
+        stream=False,
+        functions=None,
+        system=None,
+        plugins=None,
+        tool_choice=None,
+        **kwargs,
+    ):
         if stream:
             raise ValueError("Streaming is not supported.")
-        # Ignore `messages`, `functions`, and `kwargs`
+        # Ignore other arguments
         response = self.responses[self._counter]
         self._counter += 1
         return response
-
-
-class FakeERNIEBotWithAllInput(ERNIEBot):
-    def __init__(
-        self,
-        model,
-        api_type,
-        access_token,
-        enable_multi_step_tool_call,
-        enable_human_clarify,
-        **default_chat_kwargs,
-    ):
-        super().__init__(
-            model,
-            api_type,
-            access_token,
-            enable_multi_step_tool_call,
-            enable_human_clarify,
-            **default_chat_kwargs,
-        )

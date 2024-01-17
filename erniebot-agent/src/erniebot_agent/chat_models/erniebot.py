@@ -44,47 +44,7 @@ from erniebot_agent.utils import config_from_environ as C
 _T = TypeVar("_T", AIMessage, AIMessageChunk)
 
 
-class BaseERNIEBot(ChatModel):
-    @overload
-    async def chat(
-        self,
-        messages: List[Message],
-        *,
-        stream: Literal[False] = ...,
-        functions: Optional[List[dict]] = ...,
-        **kwargs: Any,
-    ) -> AIMessage:
-        ...
-
-    @overload
-    async def chat(
-        self,
-        messages: List[Message],
-        *,
-        stream: Literal[True],
-        functions: Optional[List[dict]] = ...,
-        **kwargs: Any,
-    ) -> AsyncIterator[AIMessageChunk]:
-        ...
-
-    @overload
-    async def chat(
-        self, messages: List[Message], *, stream: bool, functions: Optional[List[dict]] = ..., **kwargs: Any
-    ) -> Union[AIMessage, AsyncIterator[AIMessageChunk]]:
-        ...
-
-    async def chat(
-        self,
-        messages: List[Message],
-        *,
-        stream: bool = False,
-        functions: Optional[List[dict]] = None,
-        **kwargs: Any,
-    ) -> Union[AIMessage, AsyncIterator[AIMessageChunk]]:
-        raise NotImplementedError
-
-
-class ERNIEBot(BaseERNIEBot):
+class ERNIEBot(ChatModel):
     """The implementation of the ERNIE Bot model.
 
     Attributes:
@@ -119,17 +79,20 @@ class ERNIEBot(BaseERNIEBot):
             **default_chat_kwargs: Keyword arguments, such as `_config_`, `top_p`, `temperature`,
                 `penalty_score`, and `system`.
         """
-        super().__init__(model=model, **default_chat_kwargs)
+        super().__init__(model=model)
 
         self.api_type = api_type
         if access_token is None:
             access_token = C.get_global_access_token()
         self.access_token = access_token
-        self._maybe_validate_qianfan_auth()
 
         self.extra_data = {}
         self.extra_data["multi_step_tool_call_close"] = not enable_multi_step_tool_call
         self.extra_data["chat_with_human_close"] = not enable_human_clarify
+
+        self.default_chat_kwargs = default_chat_kwargs
+
+        self._maybe_validate_qianfan_auth()
 
     @overload
     async def chat(
@@ -138,6 +101,9 @@ class ERNIEBot(BaseERNIEBot):
         *,
         stream: Literal[False] = ...,
         functions: Optional[List[dict]] = ...,
+        system: Optional[str] = ...,
+        plugins: Optional[List[str]] = ...,
+        tool_choice: Optional[dict] = ...,
         **kwargs: Any,
     ) -> AIMessage:
         ...
@@ -149,13 +115,24 @@ class ERNIEBot(BaseERNIEBot):
         *,
         stream: Literal[True],
         functions: Optional[List[dict]] = ...,
+        system: Optional[str] = ...,
+        plugins: Optional[List[str]] = ...,
+        tool_choice: Optional[dict] = ...,
         **kwargs: Any,
     ) -> AsyncIterator[AIMessageChunk]:
         ...
 
     @overload
     async def chat(
-        self, messages: List[Message], *, stream: bool, functions: Optional[List[dict]] = ..., **kwargs: Any
+        self,
+        messages: List[Message],
+        *,
+        stream: bool,
+        functions: Optional[List[dict]] = ...,
+        system: Optional[str] = ...,
+        plugins: Optional[List[str]] = ...,
+        tool_choice: Optional[dict] = ...,
+        **kwargs: Any,
     ) -> Union[AIMessage, AsyncIterator[AIMessageChunk]]:
         ...
 
@@ -165,23 +142,41 @@ class ERNIEBot(BaseERNIEBot):
         *,
         stream: bool = False,
         functions: Optional[List[dict]] = None,
+        system: Optional[str] = None,
+        plugins: Optional[List[str]] = None,
+        tool_choice: Optional[dict] = None,
         **kwargs: Any,
     ) -> Union[AIMessage, AsyncIterator[AIMessageChunk]]:
         """Asynchronously chats with the ERNIE Bot model.
 
         Args:
             messages (List[Message]): A list of messages.
-            stream (bool): Whether to use streaming generation. Defaults to False.
-            functions (Optional[List[dict]]): The function definitions to be used by the model.
+            stream (bool): Whether to use streaming generation. Defaults to
+                False.
+            functions (Optional[List[dict]]): The function descriptions to be
+                used by the model. Defaults to None.
+            system (Optional[str]): The system message to be used by the model.
                 Defaults to None.
-            **kwargs: Keyword arguments, such as `top_p`, `temperature`, `penalty_score`, and `system`.
+            plugins (Optional[List[str]]): The names of the plugins to be used
+                by the model. Defaults to None.
+            tool_choice (Optional[dict]): The information about the tool to be
+                chosen by the model. Defaults to None.
+            **kwargs: Keyword arguments, such as `top_p`, `temperature`, and
+                `penalty_score`.
 
         Returns:
             If `stream` is False, returns a single message.
-            If `stream` is True, returns an asynchronous iterator of message chunks.
+            If `stream` is True, returns an asynchronous iterator of message
+            chunks.
         """
-
-        cfg_dict = self._generate_config(messages, functions=functions, **kwargs)
+        cfg_dict = self._generate_config(
+            messages,
+            functions=functions,
+            system=system,
+            plugins=plugins,
+            tool_choice=tool_choice,
+            **kwargs,
+        )
 
         response = await self._generate_response(cfg_dict, stream, functions)
 

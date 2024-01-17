@@ -28,7 +28,7 @@ from erniebot_agent.agents.schema import (
     ToolInfo,
     ToolStep,
 )
-from erniebot_agent.chat_models.erniebot import BaseERNIEBot
+from erniebot_agent.chat_models.base import ChatModel
 from erniebot_agent.file import File, FileManager
 from erniebot_agent.memory import Memory
 from erniebot_agent.memory.messages import FunctionMessage, HumanMessage, Message
@@ -55,13 +55,13 @@ class FunctionAgent(Agent):
         max_steps: The maximum number of steps in each agent run.
     """
 
-    llm: BaseERNIEBot
+    llm: ChatModel
     memory: Memory
     max_steps: int
 
     def __init__(
         self,
-        llm: BaseERNIEBot,
+        llm: ChatModel,
         tools: Union[ToolManager, Iterable[BaseTool]],
         *,
         memory: Optional[Memory] = None,
@@ -174,11 +174,10 @@ class FunctionAgent(Agent):
         new_messages: List[Message] = []
         input_messages = self.memory.get_messages() + chat_history
         if selected_tool is not None:
-            tool_choice = {"type": "function", "function": {"name": selected_tool.tool_name}}
             llm_resp = await self.run_llm(
                 messages=input_messages,
                 functions=[selected_tool.function_call_schema()],  # only regist one tool
-                tool_choice=tool_choice,
+                tool_choice=selected_tool.tool_name,
             )
         else:
             llm_resp = await self.run_llm(messages=input_messages)

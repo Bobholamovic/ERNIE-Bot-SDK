@@ -115,10 +115,10 @@ class FunctionAgent(Agent):
         self.max_num_iters = max_num_iters
 
         if first_tools:
-            self._first_tools = first_tools
-            for tool in self._first_tools:
+            for tool in first_tools:
                 if tool not in self.get_tools():
-                    raise RuntimeError("The tool in `first_tools` must be in the tools list.")
+                    raise ValueError("The tool in `first_tools` must be in the tools list.")
+            self._first_tools = first_tools
         else:
             self._first_tools = []
 

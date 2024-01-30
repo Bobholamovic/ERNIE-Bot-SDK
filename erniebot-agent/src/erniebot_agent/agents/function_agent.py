@@ -133,6 +133,7 @@ class FunctionAgent(Agent):
             else:
                 # If tool choice did not work, issue a warning and try next one.
                 _logger.warning("The selected tool %r was not called.", tool.tool_name)
+                break
 
         curr_iter = 0
         while True:
@@ -195,9 +196,17 @@ class FunctionAgent(Agent):
         else:
             llm_resp = await self.run_llm(messages=input_messages)
 
+        output_message = llm_resp.message
+
+        if selected_tool is not None:
+            if not (
+                output_message.function_call is not None
+                and output_message.function_call["name"] == selected_tool.tool_name
+            ):
+                return [], []
+
         new_steps: List[Union[AgentStep, AgentRunEnd]] = []
         new_messages: List[Message] = []
-        output_message = llm_resp.message  # AIMessage
         new_messages.append(output_message)
         if output_message.function_call is not None:
             tool_name = output_message.function_call["name"]

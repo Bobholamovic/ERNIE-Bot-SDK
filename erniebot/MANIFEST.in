@@ -1,1 +1,1 @@
-include erniebot/py.typed
+include src/erniebot/py.typed

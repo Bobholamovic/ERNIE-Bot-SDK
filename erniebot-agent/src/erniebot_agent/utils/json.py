@@ -13,16 +13,19 @@
 # limitations under the License.
 
 import json
-from typing import Any
 
 
-def to_compact_json(obj: Any, *, from_json: bool = False) -> str:
+def to_compact_json(obj: object, *, from_json: bool = False) -> str:
     if from_json:
+        if not isinstance(obj, (str, bytes)):
+            raise TypeError
         obj = json.loads(obj)
     return json.dumps(obj, ensure_ascii=False, sort_keys=False, separators=(",", ":"))
 
 
-def to_pretty_json(obj: Any, *, from_json: bool = False) -> str:
+def to_pretty_json(obj: object, *, from_json: bool = False) -> str:
     if from_json:
+        if not isinstance(obj, (str, bytes)):
+            raise TypeError
         obj = json.loads(obj)
     return json.dumps(obj, ensure_ascii=False, sort_keys=False, indent=2)

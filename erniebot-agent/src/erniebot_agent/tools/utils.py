@@ -277,11 +277,15 @@ async def parse_json_request(
 
                 if len(sub_file_result) > 0:
                     result[field_name] = sub_file_result
+
         if field_name in result:
             json_dict.pop(field_name, None)
         elif field_name not in result and field_name in json_dict:
             result[field_name] = json_dict.pop(field_name)
 
+        fixed_value = model_field.json_schema_extra.get("x-ebagent-fixed-value", None)
+        if fixed_value:
+            result[field_name] = fixed_value
     result.update(json_dict)
     return result
 
@@ -355,10 +359,15 @@ async def parse_json_response(
 
                 if len(sub_file_result) > 0:
                     result[field_name] = sub_file_result
+
         if field_name in result:
             json_dict.pop(field_name, None)
         elif field_name not in result and field_name in json_dict:
             result[field_name] = json_dict.pop(field_name)
+
+        fixed_value = model_field.json_schema_extra.get("x-ebagent-fixed-value", None)
+        if fixed_value:
+            result[field_name] = fixed_value
 
     result.update(json_dict)
     return result

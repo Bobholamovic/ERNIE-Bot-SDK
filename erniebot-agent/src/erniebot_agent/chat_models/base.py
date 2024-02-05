@@ -23,13 +23,10 @@ class ChatModel(metaclass=ABCMeta):
 
     Attributes:
         model (str): The model name.
-        default_chat_kwargs (Any): A dict for setting default args for chat model,
-            the supported keys include `model`, `_config_`, `top_p`, etc.
     """
 
-    def __init__(self, model: str, **default_chat_kwargs: Any):
+    def __init__(self, model: str):
         self.model = model
-        self.default_chat_kwargs = default_chat_kwargs
 
     @overload
     async def chat(
@@ -99,8 +96,7 @@ class ChatModel(metaclass=ABCMeta):
                 by the model. Defaults to None.
             tool_choice (Optional[dict]): The information about the tool to be
                 chosen by the model. Defaults to None.
-            **kwargs: Keyword arguments, such as `top_p`, `temperature`, and
-                `penalty_score`.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             If `stream` is False, returns a single message.

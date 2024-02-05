@@ -196,7 +196,7 @@ async def test_function_agent_memory(identity_tool):
 
 
 @pytest.mark.asyncio
-async def test_function_agent_max_steps(identity_tool):
+async def test_function_agent_max_num_iters(identity_tool):
     function_call = FunctionCall(
         name=identity_tool.tool_name,
         thoughts="",
@@ -214,12 +214,12 @@ async def test_function_agent_max_steps(identity_tool):
         llm=llm,
         tools=[identity_tool],
         memory=FakeMemory(),
-        max_steps=2,
+        max_num_iters=2,
     )
 
     response = await agent.run("Run!")
 
-    assert response.status == "STOPPED"
+    assert response.end_reason == "STOPPED"
 
 
 @pytest.mark.asyncio

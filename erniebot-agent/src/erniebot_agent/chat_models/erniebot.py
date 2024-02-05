@@ -61,6 +61,7 @@ class ERNIEBot(ChatModel):
         api_type: str = "aistudio",
         access_token: Optional[str] = None,
         enable_multi_step_tool_call: bool = False,
+        enable_human_clarify: bool = False,
         **default_chat_kwargs: Any,
     ) -> None:
         """Initializes an instance of the `ERNIEBot` class.
@@ -74,20 +75,24 @@ class ERNIEBot(ChatModel):
                 If access_token is None, the global access_token will be used.
             enable_multi_step_tool_call (bool): Whether to enable the multi-step tool call.
                 Defaults to False.
+            enable_human_clarify (bool): Whether to enable the human clarify. Defaults to False.
             **default_chat_kwargs: Keyword arguments, such as `_config_`, `top_p`, `temperature`,
                 `penalty_score`, and `system`.
         """
-        super().__init__(model=model, **default_chat_kwargs)
+        super().__init__(model=model)
 
         self.api_type = api_type
         if access_token is None:
             access_token = C.get_global_access_token()
         self.access_token = access_token
-        self._maybe_validate_qianfan_auth()
 
-        self.enable_multi_step_json = json.dumps(
-            {"multi_step_tool_call_close": not enable_multi_step_tool_call}
-        )
+        self.extra_data = {}
+        self.extra_data["multi_step_tool_call_close"] = not enable_multi_step_tool_call
+        self.extra_data["chat_with_human_close"] = not enable_human_clarify
+
+        self.default_chat_kwargs = default_chat_kwargs
+
+        self._maybe_validate_qianfan_auth()
 
     @overload
     async def chat(
@@ -253,14 +258,14 @@ class ERNIEBot(ChatModel):
                 _config_=cfg_dict["_config_"],
                 functions=functions,  # type: ignore
                 extra_params={
-                    "extra_data": self.enable_multi_step_json,
+                    "extra_data": json.dumps(self.extra_data),
                 },
             )
         else:
             response = await erniebot.ChatCompletion.acreate(
                 stream=stream,
                 extra_params={
-                    "extra_data": self.enable_multi_step_json,
+                    "extra_data": json.dumps(self.extra_data),
                 },
                 **cfg_dict,
             )
@@ -269,6 +274,11 @@ class ERNIEBot(ChatModel):
 
 
 def convert_response_to_output(response: ChatCompletionResponse, output_type: Type[_T]) -> _T:
+    clarify = False
+    # ernie-turbo has no `finish_reason`
+    if hasattr(response, "finish_reason") and response["finish_reason"] == "plugin_clarify":
+        clarify = True
+
     if hasattr(response, "function_call"):
         function_call = FunctionCall(
             name=response.function_call["name"],
@@ -280,6 +290,7 @@ def convert_response_to_output(response: ChatCompletionResponse, output_type: Ty
             function_call=function_call,
             plugin_info=None,
             search_info=None,
+            clarify=clarify,
             token_usage=response.usage,
         )
     elif hasattr(response, "plugin_info"):
@@ -296,6 +307,7 @@ def convert_response_to_output(response: ChatCompletionResponse, output_type: Ty
             plugin_info=plugin_info,
             search_info=None,
             token_usage=response.usage,
+            clarify=clarify,
         )
     elif hasattr(response, "search_info") and len(response.search_info.items()) > 0:
         search_info = SearchInfo(
@@ -307,6 +319,7 @@ def convert_response_to_output(response: ChatCompletionResponse, output_type: Ty
             plugin_info=None,
             search_info=search_info,
             token_usage=response.usage,
+            clarify=clarify,
         )
     else:
         return output_type(
@@ -315,4 +328,5 @@ def convert_response_to_output(response: ChatCompletionResponse, output_type: Ty
             plugin_info=None,
             search_info=None,
             token_usage=response.usage,
+            clarify=clarify,
         )

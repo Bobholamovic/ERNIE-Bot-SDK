@@ -14,49 +14,13 @@
 
 import functools
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, TypedDict, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, TypedDict, TypeVar, Union
 
 from typing_extensions import Literal
 
 from erniebot_agent.file import File, protocol
 from erniebot_agent.memory import AIMessage, Message
 from erniebot_agent.memory.messages import PluginInfo
-
-
-@dataclass
-class ToolAction(object):
-    """A tool calling action for an agent to execute."""
-
-    tool_name: str
-    tool_args: str
-
-
-@dataclass
-class PluginAction(object):  # save for plugins that can be planned
-    """A plugin calling action for an agent to execute."""
-
-    plugin_name: str
-    finish_reason: str
-
-
-@dataclass
-class NullAction(object):
-    """This class indicates that no action shall be taken by the agent."""
-
-
-NULL_ACTION = NullAction()
-
-
-# Note: save for plugins that can be planned
-AgentAction = Union[ToolAction, PluginAction, NullAction]
-PlanableAgentAction = Union[ToolAction, PluginAction]
-
-
-@dataclass
-class AgentPlan(object):
-    """A plan that contains a list of actions."""
-
-    actions: List[PlanableAgentAction]
 
 
 @dataclass
@@ -104,14 +68,6 @@ class ToolInfo(TypedDict):
     tool_args: str
 
 
-class _NullInfo(TypedDict):
-    pass
-
-
-class _NullResult(object):
-    pass
-
-
 @dataclass
 class ToolStep(AgentStepWithFiles[ToolInfo, Any]):
     """A step taken by an agent that calls a tool."""
@@ -122,12 +78,14 @@ class PluginStep(AgentStepWithFiles[PluginInfo, str]):
     """A step taken by an agent that calls a plugin."""
 
 
+AgentRunEndReason = Union[Literal["FINISHED"], Literal["STOPPED"], Literal["CLARIFY"]]
+
+
 @dataclass
-class NoActionStep(AgentStep[_NullInfo, _NullResult]):
-    """A step taken by an agent that performs no action and gives no result."""
-
-
-NO_ACTION_STEP = NoActionStep(info=_NullInfo(), result=_NullResult())
+class AgentRunEnd(object):
+    response: str
+    end_reason: AgentRunEndReason
+    extra_info: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -137,7 +95,8 @@ class AgentResponse(object):
     text: str
     chat_history: List[Message]
     steps: List[AgentStep]
-    status: Union[Literal["FINISHED"], Literal["STOPPED"]]
+    end_reason: AgentRunEndReason
+    result: Optional[Dict[str, Any]] = None
 
     @functools.cached_property  # lazy and prevent extra fime from multiple calls
     def annotations(self) -> Dict[str, List]:

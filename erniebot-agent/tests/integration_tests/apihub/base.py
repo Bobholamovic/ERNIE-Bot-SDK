@@ -13,7 +13,7 @@ from erniebot_agent.agents.schema import (
     AgentResponse,
     AgentStep,
     AgentStepWithFiles,
-    NoActionStep,
+    EndStep,
 )
 from erniebot_agent.chat_models import ERNIEBot
 from erniebot_agent.file import File, FileManager
@@ -52,7 +52,7 @@ class RemoteToolTesting(unittest.IsolatedAsyncioTestCase):
     def get_action_steps(self, response: AgentResponse) -> List[AgentStep]:
         steps = []
         for step in response.steps:
-            if not isinstance(step, NoActionStep):
+            if not isinstance(step, EndStep):
                 steps.append(step)
         return steps
 

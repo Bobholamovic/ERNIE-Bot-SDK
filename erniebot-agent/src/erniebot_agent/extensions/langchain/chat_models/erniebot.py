@@ -28,7 +28,8 @@ class ErnieBotChat(BaseChatModel):
     """ERNIE Bot Chat large language models API.
 
     To use, you should have the ``erniebot`` python package installed, and the
-    environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio access token.
+    environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio
+    access token.
 
     Example:
         .. code-block:: python
@@ -133,6 +134,8 @@ class ErnieBotChat(BaseChatModel):
             system_prompt = self._build_system_prompt_from_messages(messages)
             if system_prompt is not None:
                 params["system"] = system_prompt
+            if stop is not None:
+                params["stop"] = stop
             params["stream"] = False
             response = self.client.create(**params)
             return self._build_chat_result_from_response(response)
@@ -161,6 +164,8 @@ class ErnieBotChat(BaseChatModel):
             system_prompt = self._build_system_prompt_from_messages(messages)
             if system_prompt is not None:
                 params["system"] = system_prompt
+            if stop is not None:
+                params["stop"] = stop
             params["stream"] = False
             response = await self.client.acreate(**params)
             return self._build_chat_result_from_response(response)
@@ -213,7 +218,6 @@ class ErnieBotChat(BaseChatModel):
         message_dict = self._build_dict_from_response(response)
         generation = ChatGeneration(
             message=self._convert_dict_to_message(message_dict),
-            generation_info=dict(finish_reason="stop"),
         )
         token_usage = response.get("usage", {})
         llm_output = {"token_usage": token_usage, "model_name": self.model}

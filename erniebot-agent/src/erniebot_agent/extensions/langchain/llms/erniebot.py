@@ -7,7 +7,6 @@ from langchain.callbacks.manager import (
     CallbackManagerForLLMRun,
 )
 from langchain.llms.base import LLM
-from langchain.llms.utils import enforce_stop_tokens
 from langchain.pydantic_v1 import Field, root_validator
 from langchain.schema.output import GenerationChunk
 from langchain.utils import get_from_dict_or_env
@@ -17,7 +16,8 @@ class ErnieBot(LLM):
     """ERNIE Bot large language models.
 
     To use, you should have the ``erniebot`` python package installed, and the
-    environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio access token.
+    environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio
+    access token.
 
     Example:
         .. code-block:: python
@@ -111,11 +111,11 @@ class ErnieBot(LLM):
             params = self._invocation_params
             params.update(kwargs)
             params["messages"] = [self._build_user_message_from_prompt(prompt)]
+            if stop is not None:
+                params["stop"] = stop
             params["stream"] = False
             response = self.client.create(**params)
             text = response["result"]
-            if stop is not None:
-                text = enforce_stop_tokens(text, stop)
             return text
 
     async def _acall(
@@ -134,11 +134,11 @@ class ErnieBot(LLM):
             params = self._invocation_params
             params.update(kwargs)
             params["messages"] = [self._build_user_message_from_prompt(prompt)]
+            if stop is not None:
+                params["stop"] = stop
             params["stream"] = False
             response = await self.client.acreate(**params)
             text = response["result"]
-            if stop is not None:
-                text = enforce_stop_tokens(text, stop)
             return text
 
     def _stream(
@@ -168,7 +168,7 @@ class ErnieBot(LLM):
         **kwargs: Any,
     ) -> AsyncIterator[GenerationChunk]:
         if stop is not None:
-            raise TypeError("Currently, `stop` is not supported when streaming is enabled.")
+            raise ValueError("Currently, `stop` is not supported when streaming is enabled.")
         params = self._invocation_params
         params.update(kwargs)
         params["messages"] = [self._build_user_message_from_prompt(prompt)]

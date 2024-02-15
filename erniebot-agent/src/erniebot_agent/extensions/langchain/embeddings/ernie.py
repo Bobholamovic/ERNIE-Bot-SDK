@@ -11,7 +11,8 @@ class ErnieEmbeddings(BaseModel, Embeddings):
     """ERNIE embedding models.
 
     To use, you should have the ``erniebot`` python package installed, and the
-    environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio access token.
+    environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio
+    access token.
 
     Example:
         .. code-block:: python

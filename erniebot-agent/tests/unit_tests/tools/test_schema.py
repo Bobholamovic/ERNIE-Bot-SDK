@@ -497,7 +497,7 @@ class TestFileSchema(unittest.IsolatedAsyncioTestCase):
 
         result = await tool(first_file=file.id)
 
-        file: File = file_manager.look_up_file_by_id(result["second_file"])
+        file: File = await file_manager.look_up_file_by_id(result["second_file"])
         file_content_from_file_manager = await file.read_contents()
         file_content = base64.b64decode(file_content_base64)
         self.assertEqual(file_content, file_content_from_file_manager)

@@ -12,25 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, List, Optional
+from typing import List, Optional
 
-from jinja2 import Environment, meta
+from jinja2 import Environment, Template, meta
 
 from erniebot_agent.memory.messages import HumanMessage
 from erniebot_agent.prompt import BasePromptTemplate
-
-
-def jinja2_formatter(template: str, **kwargs: Any) -> str:
-    """Format a template using jinja2."""
-    try:
-        from jinja2 import Template
-    except ImportError:
-        raise ImportError(
-            "jinja2 not installed, which is needed to use the jinja2_formatter. "
-            "Please install it with `pip install jinja2`."
-        )
-
-    return Template(template).render(**kwargs)
 
 
 class PromptTemplate(BasePromptTemplate):
@@ -63,7 +50,7 @@ class PromptTemplate(BasePromptTemplate):
             error = self._validate_template()
             if error:
                 raise KeyError("The input_variables of PromptTemplate and template are not match! " + error)
-        return jinja2_formatter(self.template, **kwargs)
+        return Template(self.template).render(**kwargs)
 
     def _validate_template(self):
         """

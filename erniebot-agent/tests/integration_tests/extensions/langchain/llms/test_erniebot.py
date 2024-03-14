@@ -1,9 +1,8 @@
-"""Test ERNIE Bot API wrapper."""
 
 from typing import Generator
 
 import pytest
-from langchain.schema import LLMResult
+from langchain_core.outputs import LLMResult
 
 from erniebot_agent.extensions.langchain.llms import ErnieBot
 

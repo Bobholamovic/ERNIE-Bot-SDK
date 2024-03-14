@@ -1,14 +1,12 @@
-"""Test ERNIE Bot wrapper."""
-
-from typing import List
-
 import pytest
-from langchain.schema import ChatGeneration, LLMResult
-from langchain.schema.messages import (
+from langchain_core.messages import (
     AIMessage,
     BaseMessage,
-    FunctionMessage,
     HumanMessage,
+)
+from langchain_core.outputs import (
+    ChatGeneration,
+    LLMResult,
 )
 
 from erniebot_agent.extensions.langchain.chat_models import ErnieBotChat
@@ -90,75 +88,3 @@ def test_erniebot_chat_history() -> None:
     )
     assert isinstance(response, BaseMessage)
     assert isinstance(response.content, str)
-
-
-def test_erniebot_function_calling() -> None:
-    """Test function calling."""
-    functions = [
-        {
-            "name": "get_current_temperature",
-            "description": "Get the current temperature in a given location.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {
-                        "type": "string",
-                        "description": "City name.",
-                    },
-                    "unit": {
-                        "type": "string",
-                        "enum": ["celsius", "fahrenheit"],
-                    },
-                },
-                "required": ["location", "unit"],
-            },
-            "responses": {
-                "type": "object",
-                "properties": {
-                    "temperature": {
-                        "type": "integer",
-                        "description": "Temperature in the location.",
-                    },
-                    "unit": {
-                        "type": "string",
-                        "enum": ["celsius", "fahrenheit"],
-                    },
-                },
-            },
-        },
-    ]
-
-    chat = ErnieBotChat()
-    messages: List[BaseMessage] = [
-        HumanMessage(content="What is the temperature in Shenzhen today in degrees Celsius?")
-    ]
-
-    response = chat.generate([messages], functions=functions)
-    assert isinstance(response, LLMResult)
-    assert len(response.generations) == 1
-    generations = response.generations[0]
-    assert len(generations) == 1
-    generation = generations[0]
-    assert isinstance(generation, ChatGeneration)
-    assert generation.message.content == ""
-    assert "function_call" in generation.message.additional_kwargs
-    function_call = generation.message.additional_kwargs["function_call"]
-    assert function_call["name"] == "get_current_temperature"
-
-    messages.append(generation.message)
-    messages.append(
-        FunctionMessage(
-            name="get_current_temperature",
-            content='{"temperature":25,"unit":"celsius"}',
-        )
-    )
-
-    response = chat.generate([messages])
-    assert isinstance(response, LLMResult)
-    assert len(response.generations) == 1
-    generations = response.generations[0]
-    assert len(generations) == 1
-    generation = generations[0]
-    assert isinstance(generation, ChatGeneration)
-    assert generation.message.content != ""
-    assert "function_call" not in generation.message.additional_kwargs

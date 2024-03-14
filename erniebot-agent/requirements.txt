@@ -4,6 +4,9 @@ asyncio-atexit
 # erniebot
 jinja2
 langchain
+langchain-core
+langchain-community
+langchain-openai
 openapi_spec_validator
 tqdm
 typing_extensions

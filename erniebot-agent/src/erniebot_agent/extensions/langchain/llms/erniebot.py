@@ -1,33 +1,28 @@
-from __future__ import annotations
-
 from typing import Any, AsyncIterator, Dict, Iterator, List, Mapping, Optional
 
-from langchain.callbacks.manager import (
+from langchain_core.callbacks import (
     AsyncCallbackManagerForLLMRun,
     CallbackManagerForLLMRun,
 )
-from langchain.llms.base import LLM
-from langchain.pydantic_v1 import Field, root_validator
-from langchain.schema.output import GenerationChunk
-from langchain.utils import get_from_dict_or_env
+from langchain_core.language_models.llms import LLM
+from langchain_core.outputs import GenerationChunk
+from langchain_core.pydantic_v1 import Field, SecretStr, root_validator
+from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env
 
 
 class ErnieBot(LLM):
-    """ERNIE Bot large language models.
-
+    """ERNIE large language models.
     To use, you should have the ``erniebot`` python package installed, and the
     environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio
     access token.
-
     Example:
         .. code-block:: python
-
             from erniebot_agent.extensions.langchain.llms import ErnieBot
             erniebot = ErnieBot(model="ernie-3.5")
     """
 
     client: Any = None
-    aistudio_access_token: Optional[str] = None
+    aistudio_access_token: Optional[SecretStr] = None
     """AI Studio access token."""
     max_retries: int = 6
     """Maximum number of retries to make when generating."""
@@ -49,7 +44,7 @@ class ErnieBot(LLM):
 
     @property
     def _default_params(self) -> Dict[str, Any]:
-        """Get the default parameters for calling ERNIE Bot API."""
+        """Get the default parameters for calling ERNIE Bot APIs."""
         normal_params = {
             "model": self.model,
             "top_p": self.top_p,
@@ -68,9 +63,13 @@ class ErnieBot(LLM):
         """Get the parameters used to invoke the model."""
         auth_cfg: Dict[str, Optional[str]] = {
             "api_type": "aistudio",
-            "access_token": self.aistudio_access_token,
         }
-        return {**{"_config_": {"max_retries": self.max_retries, **auth_cfg}}, **self._default_params}
+        if self.aistudio_access_token:
+            auth_cfg["access_token"] = self.aistudio_access_token.get_secret_value()
+        return {
+            **{"_config_": {"max_retries": self.max_retries, **auth_cfg}},
+            **self._default_params,
+        }
 
     @property
     def _llm_type(self) -> str:
@@ -79,11 +78,12 @@ class ErnieBot(LLM):
 
     @root_validator()
     def validate_enviroment(cls, values: Dict) -> Dict:
-        values["aistudio_access_token"] = get_from_dict_or_env(
+        aistudio_access_token = get_from_dict_or_env(
             values,
             "aistudio_access_token",
             "AISTUDIO_ACCESS_TOKEN",
         )
+        values["aistudio_access_token"] = convert_to_secret_str(aistudio_access_token)
 
         try:
             import erniebot

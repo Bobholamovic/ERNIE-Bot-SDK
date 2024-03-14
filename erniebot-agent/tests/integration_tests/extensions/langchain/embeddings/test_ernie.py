@@ -1,4 +1,3 @@
-"""Test ERNIE embeddings."""
 
 import pytest
 

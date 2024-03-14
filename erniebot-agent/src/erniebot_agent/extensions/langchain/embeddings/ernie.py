@@ -1,19 +1,15 @@
-from __future__ import annotations
-
 from typing import Any, Dict, List, Optional
 
-from langchain.pydantic_v1 import BaseModel, root_validator
-from langchain.schema.embeddings import Embeddings
-from langchain.utils import get_from_dict_or_env
+from langchain_core.embeddings import Embeddings
+from langchain_core.pydantic_v1 import BaseModel, SecretStr, root_validator
+from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env
 
 
 class ErnieEmbeddings(BaseModel, Embeddings):
     """ERNIE embedding models.
-
     To use, you should have the ``erniebot`` python package installed, and the
     environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio
     access token.
-
     Example:
         .. code-block:: python
             from erniebot_agent.extensions.langchain.embeddings import ErnieEmbeddings
@@ -23,7 +19,7 @@ class ErnieEmbeddings(BaseModel, Embeddings):
     client: Any = None
     chunk_size: int = 16
     """Chunk size to use when the input is a list of texts."""
-    aistudio_access_token: Optional[str] = None
+    aistudio_access_token: Optional[SecretStr] = None
     """AI Studio access token."""
     max_retries: int = 6
     """Maximum number of retries to make when generating."""
@@ -39,11 +35,12 @@ class ErnieEmbeddings(BaseModel, Embeddings):
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
-        values["aistudio_access_token"] = get_from_dict_or_env(
+        aistudio_access_token = get_from_dict_or_env(
             values,
             "aistudio_access_token",
             "AISTUDIO_ACCESS_TOKEN",
         )
+        values["aistudio_access_token"] = convert_to_secret_str(aistudio_access_token)
 
         try:
             import erniebot
@@ -88,5 +85,8 @@ class ErnieEmbeddings(BaseModel, Embeddings):
                 lst.extend([res["embedding"]])
         return lst
 
-    def _get_auth_config(self) -> dict:
-        return {"api_type": "aistudio", "access_token": self.aistudio_access_token}
+    def _get_auth_config(self) -> dict[str, Optional[str]]:
+        config: dict[str, Optional[str]] = {"api_type": "aistudio"}
+        if self.aistudio_access_token:
+            config["access_token"] = self.aistudio_access_token.get_secret_value()
+        return config

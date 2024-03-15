@@ -24,6 +24,7 @@ _LOCAL_FILE_ID_PATTERN: Final[str] = _LOCAL_FILE_ID_PREFIX + _UUID_PATTERN
 _REMOTE_FILE_ID_PREFIX: Final[str] = _FILE_ID_PREFIX
 _REMOTE_FILE_ID_PATTERN: Final[str] = _REMOTE_FILE_ID_PREFIX + r"[0-9]{15}"
 
+_compiled_file_id_pattern = re.compile(f"(?:{_LOCAL_FILE_ID_PATTERN})|(?:{_REMOTE_FILE_ID_PATTERN})")
 _compiled_local_file_id_pattern = re.compile(_LOCAL_FILE_ID_PATTERN)
 _compiled_remote_file_id_pattern = re.compile(_REMOTE_FILE_ID_PATTERN)
 
@@ -39,7 +40,7 @@ def get_timestamp() -> str:
 
 def is_file_id(str_: str) -> bool:
     """Judge whether a file id is valid or not."""
-    return is_local_file_id(str_) or is_remote_file_id(str_)
+    return _compiled_file_id_pattern.fullmatch(str_) is not None
 
 
 def is_local_file_id(str_: str) -> bool:
@@ -54,7 +55,7 @@ def is_remote_file_id(str_: str) -> bool:
 
 def extract_file_ids(str_: str) -> List[str]:
     """Find all file ids in a string."""
-    return extract_local_file_ids(str_) + extract_remote_file_ids(str_)
+    return _compiled_file_id_pattern.findall(str_)
 
 
 def extract_local_file_ids(str_: str) -> List[str]:

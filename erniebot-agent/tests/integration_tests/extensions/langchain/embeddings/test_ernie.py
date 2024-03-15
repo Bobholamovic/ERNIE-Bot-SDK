@@ -1,4 +1,3 @@
-
 import pytest
 
 from erniebot_agent.extensions.langchain.embeddings import ErnieEmbeddings

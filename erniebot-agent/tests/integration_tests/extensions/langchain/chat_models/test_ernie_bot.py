@@ -1,13 +1,6 @@
 import pytest
-from langchain_core.messages import (
-    AIMessage,
-    BaseMessage,
-    HumanMessage,
-)
-from langchain_core.outputs import (
-    ChatGeneration,
-    LLMResult,
-)
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.outputs import ChatGeneration, LLMResult
 
 from erniebot_agent.extensions.langchain.chat_models import ErnieBotChat
 

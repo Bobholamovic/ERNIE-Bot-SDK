@@ -38,7 +38,7 @@ class LlamaIndexRetrievalTool(Tool):
         if input_type is not None:
             self.input_type = input_type
         if output_type is not None:
-            self.ouptut_type = output_type
+            self.output_type = output_type
         self.threshold = threshold
 
     async def __call__(self, query: str, top_k: int = 3, filters: Optional[Dict[str, Any]] = None):

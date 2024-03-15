@@ -44,7 +44,7 @@ class RemoteToolkit:
     paths: List[RemoteToolView]
     file_manager: Optional[FileManager]
 
-    component_schemas: dict[str, Type[ToolParameterView]]
+    component_schemas: Dict[str, Type[ToolParameterView]]
     headers: dict
     examples: List[Message] = field(default_factory=list)
     _AISTUDIO_HUB_BASE_URL: ClassVar[str] = "https://aistudio-hub.baidu.com"

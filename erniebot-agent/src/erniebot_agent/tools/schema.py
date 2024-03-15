@@ -419,7 +419,7 @@ class RemoteToolView:
         uri: str,
         method: str,
         path_info: dict,
-        parameters_views: dict[str, Type[ToolParameterView]],
+        parameters_views: Dict[str, Type[ToolParameterView]],
         version: str,
     ) -> RemoteToolView:
         """construct RemoteToolView from openapi spec-dict info

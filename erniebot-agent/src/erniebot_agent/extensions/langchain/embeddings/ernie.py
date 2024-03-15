@@ -85,8 +85,8 @@ class ErnieEmbeddings(BaseModel, Embeddings):
                 lst.extend([res["embedding"]])
         return lst
 
-    def _get_auth_config(self) -> dict[str, Optional[str]]:
-        config: dict[str, Optional[str]] = {"api_type": "aistudio"}
+    def _get_auth_config(self) -> Dict[str, Optional[str]]:
+        config: Dict[str, Optional[str]] = {"api_type": "aistudio"}
         if self.aistudio_access_token:
             config["access_token"] = self.aistudio_access_token.get_secret_value()
         return config

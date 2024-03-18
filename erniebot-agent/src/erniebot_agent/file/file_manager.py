@@ -32,6 +32,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
     Type,
     Union,
     final,
@@ -450,15 +451,38 @@ class FileManager(Closeable, Noncopyable):
         finally:
             _default_file_manager_var.reset(token)
 
-    async def sniff_and_extract_files_from_obj(self, obj: object, *, recursive: bool = True) -> List[File]:
-        async with self._lock:
-            self.ensure_not_closed()
-            return await self._sniff_and_extract_files_from_obj(obj, recursive=recursive)
+    def sniff_and_extract_files_from_obj(self, obj: object, *, recursive: bool = True) -> List[File]:
+        self.ensure_not_closed()
+        files: List[File] = []
+        if isinstance(obj, str):
+            if protocol.is_file_id(obj):
+                file_id = obj
+                file = self._file_registry.look_up_file(file_id)
+                if file is not None:
+                    files.append(file)
+        else:
+            if recursive:
+                if isinstance(obj, Sequence):
+                    for item in obj:
+                        files.extend(self.sniff_and_extract_files_from_obj(item, recursive=True))
+                elif isinstance(obj, Mapping):
+                    for item in obj.values():
+                        files.extend(self.sniff_and_extract_files_from_obj(item, recursive=True))
+        return files
 
-    async def sniff_and_extract_files_from_text(self, text: str) -> List[File]:
-        async with self._lock:
-            self.ensure_not_closed()
-            return await self._sniff_and_extract_files_from_text(text)
+    def sniff_and_extract_files_from_text(self, text: str) -> List[File]:
+        self.ensure_not_closed()
+        file_ids = protocol.extract_file_ids(text)
+        visited_file_ids: Set[str] = set()
+        files: List[File] = []
+        for file_id in file_ids:
+            if file_id in visited_file_ids:
+                continue
+            file = self._file_registry.look_up_file(file_id)
+            if file is not None:
+                files.append(file)
+            visited_file_ids.add(file_id)
+        return files
 
     async def create_file_reprs(self, files: Iterable[File], *, include_urls: bool = True) -> List[str]:
         file_reprs: List[str] = []
@@ -512,35 +536,6 @@ class FileManager(Closeable, Noncopyable):
             else:
                 assert_never()
             self._file_registry.unregister_file(file)
-
-    async def _sniff_and_extract_files_from_obj(self, obj: object, *, recursive: bool = True) -> List[File]:
-        files: List[File] = []
-        if isinstance(obj, str):
-            if protocol.is_file_id(obj):
-                file_id = obj
-                file = self._file_registry.look_up_file(file_id)
-                if file is not None:
-                    files.append(file)
-        else:
-            if recursive:
-                if isinstance(obj, Sequence):
-                    for item in obj:
-                        files.extend(await self._sniff_and_extract_files_from_obj(item, recursive=True))
-                elif isinstance(obj, Mapping):
-                    for item in obj.values():
-                        files.extend(await self._sniff_and_extract_files_from_obj(item, recursive=True))
-        return files
-
-    async def _sniff_and_extract_files_from_text(self, text: str) -> List[File]:
-        file_ids = protocol.extract_file_ids(text)
-        file_ids = list(set(file_ids))
-        files: List[File] = []
-        for file_id in file_ids:
-            if protocol.is_file_id(file_id):
-                file = self._file_registry.look_up_file(file_id)
-                if file is not None:
-                    files.append(file)
-        return files
 
     def _get_default_file_type(self) -> Literal["local", "remote"]:
         if self._remote_file_client is not None:

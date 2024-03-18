@@ -290,10 +290,10 @@ class Agent(GradioMixin, BaseAgent):
         # XXX: Sniffing is error-prone and less efficient. Further, the result
         # can be incorrect. Can we make a protocol to statically recognize file
         # inputs and outputs or can we have the tools introspect about this?
-        input_files = await file_manager.sniff_and_extract_files_from_obj(parsed_tool_args)
+        input_files = file_manager.sniff_and_extract_files_from_obj(parsed_tool_args)
         tool_ret = await tool(**parsed_tool_args)
         if isinstance(tool_ret, dict):
-            output_files = await file_manager.sniff_and_extract_files_from_obj(tool_ret)
+            output_files = file_manager.sniff_and_extract_files_from_obj(tool_ret)
         else:
             output_files = []
         tool_ret_json = json.dumps(tool_ret, ensure_ascii=False)

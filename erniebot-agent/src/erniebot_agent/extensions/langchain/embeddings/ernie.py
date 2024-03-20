@@ -5,15 +5,17 @@ from langchain_core.pydantic_v1 import BaseModel, SecretStr, root_validator
 from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env
 
 
-class ErnieEmbeddings(BaseModel, Embeddings):
+class ERNIEEmbeddings(BaseModel, Embeddings):
     """ERNIE embedding models.
+
     To use, you should have the ``erniebot`` python package installed, and the
     environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio
     access token.
+
     Example:
         .. code-block:: python
-            from erniebot_agent.extensions.langchain.embeddings import ErnieEmbeddings
-            ernie_embeddings = ErnieEmbeddings()
+            from erniebot_agent.extensions.langchain.embeddings import ERNIEEmbeddings
+            ernie_embeddings = ERNIEEmbeddings()
     """
 
     client: Any = None
@@ -28,10 +30,6 @@ class ErnieEmbeddings(BaseModel, Embeddings):
     """Model to use."""
     request_timeout: Optional[int] = 60
     """How many seconds to wait for the server to send data before giving up."""
-
-    ernie_client_id: Optional[str] = None
-    ernie_client_secret: Optional[str] = None
-    """For raising deprecation warnings."""
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
@@ -85,8 +83,8 @@ class ErnieEmbeddings(BaseModel, Embeddings):
                 lst.extend([res["embedding"]])
         return lst
 
-    def _get_auth_config(self) -> Dict[str, Optional[str]]:
-        config: Dict[str, Optional[str]] = {"api_type": "aistudio"}
+    def _get_auth_config(self) -> Dict[str, Any]:
+        config: Dict[str, Any] = {"api_type": "aistudio"}
         if self.aistudio_access_token:
             config["access_token"] = self.aistudio_access_token.get_secret_value()
         return config

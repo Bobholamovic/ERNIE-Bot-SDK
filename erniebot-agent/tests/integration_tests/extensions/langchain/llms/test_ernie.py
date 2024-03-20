@@ -3,44 +3,44 @@ from typing import Generator
 import pytest
 from langchain_core.outputs import LLMResult
 
-from erniebot_agent.extensions.langchain.llms import ErnieBot
+from erniebot_agent.extensions.langchain.llms import ERNIE
 
 
-def test_erniebot_call() -> None:
+def test_ernie_call() -> None:
     """Test valid call."""
-    llm = ErnieBot()
-    output = llm("Hi, erniebot.")
+    llm = ERNIE()
+    output = llm("Hi, ernie.")
     assert isinstance(output, str)
 
 
-def test_erniebot_generate() -> None:
+def test_ernie_generate() -> None:
     """Test generation."""
-    llm = ErnieBot()
-    output = llm.generate(["Hi, erniebot."])
+    llm = ERNIE()
+    output = llm.generate(["Hi, ernie."])
     assert isinstance(output, LLMResult)
     assert isinstance(output.generations, list)
 
 
 @pytest.mark.asyncio
-async def test_erniebot_agenerate() -> None:
+async def test_ernie_agenerate() -> None:
     """Test asynchronous generation."""
-    llm = ErnieBot()
-    output = await llm.agenerate(["Hi, erniebot."])
+    llm = ERNIE()
+    output = await llm.agenerate(["Hi, ernie."])
     assert isinstance(output, LLMResult)
     assert isinstance(output.generations, list)
 
 
-def test_erniebot_streaming_generate() -> None:
+def test_ernie_streaming_generate() -> None:
     """Test generation with streaming enabled."""
-    llm = ErnieBot(streaming=True)
+    llm = ERNIE(streaming=True)
     output = llm.generate(["Write a joke."])
     assert isinstance(output, LLMResult)
     assert isinstance(output.generations, list)
 
 
-def test_erniebot_stream() -> None:
+def test_ernie_stream() -> None:
     """Test streaming."""
-    llm = ErnieBot()
+    llm = ERNIE()
     output = llm.stream("Write a joke.")
     assert isinstance(output, Generator)
     for res in output:
@@ -48,9 +48,9 @@ def test_erniebot_stream() -> None:
 
 
 @pytest.mark.asyncio
-async def test_erniebot_astream() -> None:
+async def test_ernie_astream() -> None:
     """Test asynchronous streaming."""
-    llm = ErnieBot()
+    llm = ERNIE()
     output = llm.astream("Write a joke.")
     async for res in output:
         assert isinstance(res, str)

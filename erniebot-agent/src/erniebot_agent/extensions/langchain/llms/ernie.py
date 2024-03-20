@@ -10,15 +10,17 @@ from langchain_core.pydantic_v1 import Field, SecretStr, root_validator
 from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env
 
 
-class ErnieBot(LLM):
+class ERNIE(LLM):
     """ERNIE large language models.
+
     To use, you should have the ``erniebot`` python package installed, and the
     environment variable ``AISTUDIO_ACCESS_TOKEN`` set with your AI Studio
     access token.
+
     Example:
         .. code-block:: python
-            from erniebot_agent.extensions.langchain.llms import ErnieBot
-            erniebot = ErnieBot(model="ernie-3.5")
+            from erniebot_agent.extensions.langchain.llms import ERNIE
+            erniebot = ERNIE(model="ernie-3.5")
     """
 
     client: Any = None
@@ -26,6 +28,7 @@ class ErnieBot(LLM):
     """AI Studio access token."""
     max_retries: int = 6
     """Maximum number of retries to make when generating."""
+
     streaming: bool = False
     """Whether to stream the results or not."""
 
@@ -44,15 +47,20 @@ class ErnieBot(LLM):
 
     @property
     def _default_params(self) -> Dict[str, Any]:
-        """Get the default parameters for calling ERNIE Bot APIs."""
-        normal_params = {
+        """Get the default parameters for calling APIs."""
+        params: Dict[str, Any] = {
             "model": self.model,
-            "top_p": self.top_p,
-            "temperature": self.temperature,
-            "penalty_score": self.penalty_score,
-            "request_timeout": self.request_timeout,
         }
-        return {**normal_params, **self.model_kwargs}
+        if self.temperature is not None:
+            params["temperature"] = self.temperature
+        if self.top_p is not None:
+            params["top_p"] = self.top_p
+        if self.penalty_score is not None:
+            params["penalty_score"] = self.penalty_score
+        if self.request_timeout is not None:
+            params["request_timeout"] = self.request_timeout
+        params["stream"] = self.streaming
+        return {**params, **self.model_kwargs}
 
     @property
     def _identifying_params(self) -> Dict[str, Any]:
@@ -61,7 +69,7 @@ class ErnieBot(LLM):
     @property
     def _invocation_params(self) -> Dict[str, Any]:
         """Get the parameters used to invoke the model."""
-        auth_cfg: Dict[str, Optional[str]] = {
+        auth_cfg: Dict[str, Any] = {
             "api_type": "aistudio",
         }
         if self.aistudio_access_token:
@@ -74,7 +82,7 @@ class ErnieBot(LLM):
     @property
     def _llm_type(self) -> str:
         """Return type of llm."""
-        return "erniebot"
+        return "ernie"
 
     @root_validator()
     def validate_enviroment(cls, values: Dict) -> Dict:

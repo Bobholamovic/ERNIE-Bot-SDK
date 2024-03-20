@@ -1,11 +1,11 @@
 import pytest
 
-from erniebot_agent.extensions.langchain.embeddings import ErnieEmbeddings
+from erniebot_agent.extensions.langchain.embeddings import ERNIEEmbeddings
 
 
 def test_ernie_embed_query() -> None:
     query = "foo"
-    embedding = ErnieEmbeddings()
+    embedding = ERNIEEmbeddings()
     output = embedding.embed_query(query)
     assert len(output) == 384
 
@@ -13,14 +13,14 @@ def test_ernie_embed_query() -> None:
 @pytest.mark.asyncio
 async def test_ernie_aembed_query() -> None:
     query = "foo"
-    embedding = ErnieEmbeddings()
+    embedding = ERNIEEmbeddings()
     output = await embedding.aembed_query(query)
     assert len(output) == 384
 
 
 def test_ernie_embed_documents() -> None:
     documents = ["foo", "bar"]
-    embedding = ErnieEmbeddings()
+    embedding = ERNIEEmbeddings()
     output = embedding.embed_documents(documents)
     assert len(output) == 2
     assert len(output[0]) == 384
@@ -30,7 +30,7 @@ def test_ernie_embed_documents() -> None:
 @pytest.mark.asyncio
 async def test_ernie_aembed_documents() -> None:
     documents = ["foo", "bar"]
-    embedding = ErnieEmbeddings()
+    embedding = ERNIEEmbeddings()
     output = await embedding.aembed_documents(documents)
     assert len(output) == 2
     assert len(output[0]) == 384

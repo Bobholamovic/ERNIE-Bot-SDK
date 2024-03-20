@@ -16,7 +16,7 @@ content-type = "text/markdown"
 [project.optional-dependencies]
 gradio = ["gradio >= 3.48"]
 all = [
-    "erniebot_agent[gradio]",
+    "erniebot-agent[gradio]",
 ]
 
 [tool.setuptools]

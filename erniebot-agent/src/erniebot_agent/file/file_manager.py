@@ -534,7 +534,7 @@ class FileManager(Closeable, Noncopyable):
                 assert self._save_dir.resolve() in file.path.resolve().parents
                 await file.delete()
             else:
-                assert_never()
+                assert_never(file.type)
             self._file_registry.unregister_file(file)
 
     def _get_default_file_type(self) -> Literal["local", "remote"]:

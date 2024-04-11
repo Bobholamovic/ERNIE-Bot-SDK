@@ -422,7 +422,7 @@ class ChatCompletion(EBResource, CreatableWithStreaming):
             if given_name in old_name_to_new_name:
                 new_name = old_name_to_new_name[given_name]
                 logging.warning(
-                    "'%s' will be deprecated in the future. Please use '%s' instead.", given_name, new_name
+                    "'%s' is deprecated. Please use '%s' instead.", given_name, new_name
                 )
                 return new_name
             else:
